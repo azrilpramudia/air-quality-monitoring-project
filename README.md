@@ -116,10 +116,9 @@ Proyek ini dirilis di bawah lisensi **MIT License** — silakan gunakan dan modi
 
 ## 👤 Kontributor
 
-**Azril Pramudia Anugrah**  
-IoT Engineer & Web Developer  
-📍 Bandung, Indonesia  
-📧 [azrilpramudia@example.com](mailto:azrilpramudia@example.com)
+azrilpramudia
+prawira26
+miraaldina
 
 ---
 
