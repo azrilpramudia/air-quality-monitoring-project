@@ -68,8 +68,7 @@ Make sure the following libraries are installed in **Arduino IDE** or **Platform
 ---
 
 ## 📷 Example Display
-
-*(Add photo or screenshot here)*  
+  
 ![Preview](images/preview.jpg)
 
 ---
