@@ -1,33 +1,33 @@
 # 🌫️ Air Quality Monitoring System
 
-Sistem **Air Quality Monitoring** ini dirancang untuk memantau kualitas udara secara real-time menggunakan mikrokontroler **ESP32** dan beberapa sensor utama seperti **ENS160**, **SHT31**, dan **GP2Y1010AU0F**, dengan tampilan data pada layar **ILI9431 TFT Display**.
+**Air Quality Monitoring System** is designed to monitor air quality in real time using an **ESP32** microcontroller and key sensors such as **ENS160**, **SHT31**, and **GP2Y1010AU0F**, with live data displayed on an **ILI9431 TFT screen**.
 
 ---
 
-## 📦 Daftar Komponen
+## 📦 Components
 
-| Komponen | Fungsi | Keterangan |
-|-----------|---------|-------------|
-| **ESP32** | Mikrokontroler utama | Mengumpulkan data sensor dan menampilkan hasil |
-| **ENS160** | Sensor kualitas udara digital | Mengukur VOC, eCO₂, dan AQI (Air Quality Index) |
-| **SHT31-D** | Sensor suhu & kelembapan | Memberikan data kompensasi untuk ENS160 |
-| **GP2Y1010AU0F** | Sensor debu (partikulat) | Mengukur konsentrasi debu di udara |
-| **ILI9431** | TFT Display 2.4"/2.8"/3.2" | Menampilkan data hasil pengukuran secara real-time |
-
----
-
-## ⚙️ Fitur Utama
-
-- 🔹 Monitoring kualitas udara (AQI, TVOC, eCO₂)
-- 🌡️ Pengukuran suhu dan kelembapan
-- 🌫️ Deteksi kadar debu PM (GP2Y1010AU0F)
-- 🖥️ Tampilan real-time pada layar TFT (ILI9431)
-- 🔄 Pembaruan data otomatis dengan interval tertentu
-- 💾 Potensi integrasi ke cloud (Firebase / MQTT / Web Dashboard)
+| Component | Function | Description |
+|------------|-----------|--------------|
+| **ESP32** | Main microcontroller | Collects sensor data and displays results |
+| **ENS160** | Digital air quality sensor | Measures VOC, eCO₂, and AQI (Air Quality Index) |
+| **SHT31-D** | Temperature & humidity sensor | Provides temperature and humidity compensation for ENS160 |
+| **GP2Y1010AU0F** | Dust/particulate sensor | Measures dust concentration in the air |
+| **ILI9431** | TFT Display 2.4"/2.8"/3.2" | Displays real-time sensor readings |
 
 ---
 
-## 📊 Diagram Sistem
+## ⚙️ Features
+
+- 🔹 Real-time monitoring of air quality (AQI, TVOC, eCO₂)  
+- 🌡️ Temperature and humidity measurement  
+- 🌫️ Dust particle concentration detection (GP2Y1010AU0F)  
+- 🖥️ Real-time display via TFT (ILI9431)  
+- 🔄 Automatic periodic data refresh  
+- 💾 Optional cloud integration (Firebase / MQTT / Web Dashboard)
+
+---
+
+## 📊 System Diagram
 
 ```
 [ENS160]──┐
@@ -39,9 +39,9 @@ Sistem **Air Quality Monitoring** ini dirancang untuk memantau kualitas udara se
 
 ---
 
-## 💻 Library yang Digunakan
+## 💻 Required Libraries
 
-Pastikan semua library berikut sudah terinstal di **Arduino IDE** atau **PlatformIO**:
+Make sure the following libraries are installed in **Arduino IDE** or **PlatformIO**:
 
 ```cpp
 #include <Wire.h>
@@ -53,75 +53,60 @@ Pastikan semua library berikut sudah terinstal di **Arduino IDE** atau **Platfor
 #include <lvgl.h>
 ```
 
-> ⚠️ **Catatan:** Pastikan juga konfigurasi `User_Setup.h` pada library `TFT_eSPI` sudah sesuai dengan model layar ILI9431 yang digunakan.
+> ⚠️ **Note:** Ensure that the `User_Setup.h` configuration file in the `TFT_eSPI` library matches your specific ILI9431 model.
 
 ---
 
-## 🧠 Cara Kerja Singkat
+## 🧠 How It Works
 
-1. **Inisialisasi sensor**: ESP32 mengaktifkan ENS160, SHT31, dan GP2Y1010AU0F.
-2. **Pembacaan data**: Setiap sensor mengirimkan nilai hasil pengukuran (VOC, eCO₂, suhu, kelembapan, debu).
-3. **Kompensasi data**: ENS160 menggunakan data suhu & kelembapan dari SHT31 untuk kalibrasi akurat.
-4. **Tampilan hasil**: Semua data divisualisasikan di layar ILI9431 menggunakan library `LVGL` atau `TFT_eSPI`.
-5. *(Opsional)* **Kirim ke Cloud / Dashboard**: Data bisa dikirim ke server menggunakan Wi-Fi ESP32.
+1. **Sensor Initialization** – ESP32 initializes ENS160, SHT31, and GP2Y1010AU0F.  
+2. **Data Reading** – Each sensor sends measured data (VOC, eCO₂, temperature, humidity, dust).  
+3. **Data Compensation** – ENS160 uses temperature & humidity data from SHT31 for accurate calibration.  
+4. **Display Output** – All values are shown on the ILI9431 screen using `LVGL` or `TFT_eSPI`.  
+5. *(Optional)* **Cloud Upload** – Data can be uploaded via Wi-Fi to Firebase or MQTT servers.
 
 ---
 
-## 📷 Contoh Tampilan
+## 📷 Example Display
 
-*(Tambahkan foto atau screenshot di sini)*  
+*(Add photo or screenshot here)*  
 ![Preview](images/preview.jpg)
 
 ---
 
-## 🔌 Wiring Diagram (Singkat)
+## 🔌 Wiring Overview
 
-| Komponen | Pin ESP32 | Keterangan |
-|-----------|-----------|------------|
+| Component | ESP32 Pin | Description |
+|------------|------------|-------------|
 | ENS160 | SDA → 21, SCL → 22 | I2C |
 | SHT31 | SDA → 21, SCL → 22 | I2C |
 | GP2Y1010AU0F | LED → 12, Vo → 34 | Analog input |
-| ILI9431 | SPI Pins (MOSI → 23, MISO → 19, SCK → 18, CS → 15, DC → 2, RST → 4) | Tampilan TFT |
+| ILI9431 | MOSI → 23, MISO → 19, SCK → 18, CS → 15, DC → 2, RST → 4 | SPI display |
 
 ---
 
-## 🚀 Instalasi
+## 🚀 Installation
 
-1. Clone repositori ini:
+1. Clone this repository:
    ```bash
    git clone https://github.com/<username>/Air-Quality-Monitoring.git
    cd Air-Quality-Monitoring
    ```
-2. Buka proyek di **Arduino IDE** atau **PlatformIO**
-3. Pastikan semua library sudah terinstal
-4. Hubungkan ESP32 dan upload kode
-5. Lihat hasil pembacaan di layar atau di Serial Monitor
+2. Open the project in **Arduino IDE** or **PlatformIO**  
+3. Install all required libraries  
+4. Connect your ESP32 and upload the code  
+5. Observe sensor readings on the TFT or Serial Monitor  
+
+## 👤 Contributors
+
+| Name | GitHub Account |
+|------|----------------|
+| **azrilpramudia** | [azrilpramudia](https://github.com/azrilpramudia) |
+| **prawira26** | [prawira26](https://github.com/prawira26) |
+| **miraaldina** | [miraaldina](https://github.com/miraaldina) |
 
 ---
 
-## 🧩 Rencana Pengembangan
+## ⭐ Support
 
-- [ ] Integrasi Firebase / MQTT untuk cloud dashboard  
-- [ ] Logging data ke SD Card  
-- [ ] Kalibrasi otomatis ENS160  
-- [ ] Desain 3D casing proyek  
-
----
-
-## 🛠️ Lisensi
-
-Proyek ini dirilis di bawah lisensi **MIT License** — silakan gunakan dan modifikasi sesuai kebutuhan.
-
----
-
-## 👤 Kontributor
-
-azrilpramudia
-prawira26
-miraaldina
-
----
-
-## ⭐ Dukungan
-
-Jika proyek ini bermanfaat, berikan ⭐ di repositori ini untuk mendukung pengembangannya!
+If you find this project helpful, please consider giving it a ⭐ on GitHub to support further development!
