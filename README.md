@@ -6,23 +6,23 @@
 
 ## 📦 Components
 
-| Component | Function | Description |
-|------------|-----------|--------------|
-| **ESP32** | Main microcontroller | Collects sensor data and displays results |
-| **ENS160** | Digital air quality sensor | Measures VOC, eCO₂, and AQI (Air Quality Index) |
-| **SHT31-D** | Temperature & humidity sensor | Provides temperature and humidity compensation for ENS160 |
-| **GP2Y1010AU0F** | Dust/particulate sensor | Measures dust concentration in the air |
-| **ILI9431** | TFT Display 2.4"/2.8"/3.2" | Displays real-time sensor readings |
+| Component        | Function                      | Description                                               |
+| ---------------- | ----------------------------- | --------------------------------------------------------- |
+| **ESP32**        | Main microcontroller          | Collects sensor data and displays results                 |
+| **ENS160**       | Digital air quality sensor    | Measures VOC, eCO₂, and AQI (Air Quality Index)           |
+| **SHT31-D**      | Temperature & humidity sensor | Provides temperature and humidity compensation for ENS160 |
+| **GP2Y1010AU0F** | Dust/particulate sensor       | Measures dust concentration in the air                    |
+| **ILI9431**      | TFT Display 2.4"/2.8"/3.2"    | Displays real-time sensor readings                        |
 
 ---
 
 ## ⚙️ Features
 
-- 🔹 Real-time monitoring of air quality (AQI, TVOC, eCO₂)  
-- 🌡️ Temperature and humidity measurement  
-- 🌫️ Dust particle concentration detection (GP2Y1010AU0F)  
-- 🖥️ Real-time display via TFT (ILI9431)  
-- 🔄 Automatic periodic data refresh  
+- 🔹 Real-time monitoring of air quality (AQI, TVOC, eCO₂)
+- 🌡️ Temperature and humidity measurement
+- 🌫️ Dust particle concentration detection (GP2Y1010AU0F)
+- 🖥️ Real-time display via TFT (ILI9431)
+- 🔄 Automatic periodic data refresh
 - 💾 Optional cloud integration (Firebase / MQTT / Web Dashboard)
 
 ---
@@ -59,28 +59,28 @@ Make sure the following libraries are installed in **Arduino IDE** or **Platform
 
 ## 🧠 How It Works
 
-1. **Sensor Initialization** – ESP32 initializes ENS160, SHT31, and GP2Y1010AU0F.  
-2. **Data Reading** – Each sensor sends measured data (VOC, eCO₂, temperature, humidity, dust).  
-3. **Data Compensation** – ENS160 uses temperature & humidity data from SHT31 for accurate calibration.  
-4. **Display Output** – All values are shown on the ILI9431 screen using `LVGL` or `TFT_eSPI`.  
-5. *(Optional)* **Cloud Upload** – Data can be uploaded via Wi-Fi to Firebase or MQTT servers.
+1. **Sensor Initialization** – ESP32 initializes ENS160, SHT31, and GP2Y1010AU0F.
+2. **Data Reading** – Each sensor sends measured data (VOC, eCO₂, temperature, humidity, dust).
+3. **Data Compensation** – ENS160 uses temperature & humidity data from SHT31 for accurate calibration.
+4. **Display Output** – All values are shown on the ILI9431 screen using `LVGL` or `TFT_eSPI`.
+5. _(Optional)_ **Cloud Upload** – Data can be uploaded via Wi-Fi to Firebase or MQTT servers.
 
 ---
 
 ## 📷 Example Display
-  
-![Preview](images/preview.jpg)
+
+![Preview](/media/images/AQI.jpg)
 
 ---
 
 ## 🔌 Wiring Overview
 
-| Component | ESP32 Pin | Description |
-|------------|------------|-------------|
-| ENS160 | SDA → 21, SCL → 22 | I2C |
-| SHT31 | SDA → 21, SCL → 22 | I2C |
-| GP2Y1010AU0F | LED → 12, Vo → 34 | Analog input |
-| ILI9431 | MOSI → 23, MISO → 19, SCK → 18, CS → 15, DC → 2, RST → 4 | SPI display |
+| Component    | ESP32 Pin                                                | Description  |
+| ------------ | -------------------------------------------------------- | ------------ |
+| ENS160       | SDA → 21, SCL → 22                                       | I2C          |
+| SHT31        | SDA → 21, SCL → 22                                       | I2C          |
+| GP2Y1010AU0F | LED → 12, Vo → 34                                        | Analog input |
+| ILI9431      | MOSI → 23, MISO → 19, SCK → 18, CS → 15, DC → 2, RST → 4 | SPI display  |
 
 ---
 
@@ -91,18 +91,18 @@ Make sure the following libraries are installed in **Arduino IDE** or **Platform
    git clone https://github.com/<username>/Air-Quality-Monitoring.git
    cd Air-Quality-Monitoring
    ```
-2. Open the project in **Arduino IDE** or **PlatformIO**  
-3. Install all required libraries  
-4. Connect your ESP32 and upload the code  
-5. Observe sensor readings on the TFT or Serial Monitor  
+2. Open the project in **Arduino IDE** or **PlatformIO**
+3. Install all required libraries
+4. Connect your ESP32 and upload the code
+5. Observe sensor readings on the TFT or Serial Monitor
 
 ## 👤 Contributors
 
-| Name | GitHub Account |
-|------|----------------|
+| Name              | GitHub Account                                    |
+| ----------------- | ------------------------------------------------- |
 | **azrilpramudia** | [azrilpramudia](https://github.com/azrilpramudia) |
-| **prawira26** | [prawira26](https://github.com/prawira26) |
-| **miraaldina** | [miraaldina](https://github.com/miraaldina) |
+| **prawira26**     | [prawira26](https://github.com/prawira26)         |
+| **miraaldina**    | [miraaldina](https://github.com/miraaldina)       |
 
 ---
 
