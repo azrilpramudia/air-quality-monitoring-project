@@ -76,7 +76,21 @@ Before submitting:
 1. Ensure the ESP32 boots without error.  
 2. Test all connected sensors for correct readings.  
 3. Verify LVGL display updates properly.  
-4. If connected to a dashboard, confirm data is transmitted correctly.  
+4. If connected to a dashboard, confirm data is transmitted correctly.
+
+## 👥 Contributors
+
+<p>
+  <a href="https://github.com/azrilpramudia">
+    <img src="https://github.com/azrilpramudia.png" width="80" style="clip-path: circle(50%); margin:10px;">
+  </a>
+  <a href="https://github.com/prawira26">
+    <img src="https://github.com/prawira26.png" width="80" style="clip-path: circle(50%); margin:10px;">
+  </a>
+  <a href="https://github.com/miraaldina">
+    <img src="https://github.com/miraaldina.png" width="80" style="clip-path: circle(50%); margin:10px;">
+  </a>
+</p>
 
 ## 💬 Need Help?
 If you encounter any issues or have questions about contribution guidelines, feel free to open a discussion or contact one of the maintainers via GitHub.
