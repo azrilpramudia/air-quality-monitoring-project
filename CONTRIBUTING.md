@@ -30,9 +30,9 @@ cd Air-Quality-Monitoring
 ### 2. Create a New Branch
 Name your branch according to the feature or fix you’re working on:
 ```bash
-git checkout -b feature/add-lvgl-ui
+git checkout -b feature/your-feature-add
 # or
-git checkout -b fix/sensor-readings
+git checkout -b fix/your-fix-add
 ```
 
 ### 3. Make Your Changes
@@ -77,23 +77,6 @@ Before submitting:
 2. Test all connected sensors for correct readings.  
 3. Verify LVGL display updates properly.  
 4. If connected to a dashboard, confirm data is transmitted correctly.  
-
----
-
-## 🧑‍💻 Contributor Roles
-| Contributor | Role | Description |
-|--------------|------|--------------|
-| **Azril Pramudia** | Lead Developer | Hardware integration (ESP32, ENS160, GP2Y1010AU0F) and system UI (LVGL, TFT) |
-| **Prawira** | Firmware Developer | Sensor logic, communication protocols, and calibration |
-| **Miraaldina** | Documentation & Testing | README, documentation, testing reports, and UI improvements |
-
----
-
-## 📜 License
-By contributing, you agree that your contributions will be licensed under the same license as the project.  
-See the [LICENSE](./LICENSE) file for details.
-
----
 
 ## 💬 Need Help?
 If you encounter any issues or have questions about contribution guidelines, feel free to open a discussion or contact one of the maintainers via GitHub.
