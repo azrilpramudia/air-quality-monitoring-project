@@ -26,7 +26,7 @@ const Hero = () => {
   const location = "Bandung, Jawa Barat";
 
   return (
-    <section className="bg-gradient-to-b from-slate-50 to-white">
+    <section className="font-poppins bg-gradient-to-b from-slate-50 to-white">
       {/* Main AQI Display */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Location & Time Header */}
