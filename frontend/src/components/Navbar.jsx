@@ -48,7 +48,7 @@ const Navbar = () => {
               <Droplets className="h-4 w-4 text-slate-200" />
               <div>
                 <p className="text-xs text-slate-300 leading-tight">Humidity</p>
-                <p className="text-xs font-semibold text-white">AHT21</p>
+                <p className="text-xs font-semibold text-white">SHT31</p>
               </div>
             </div>
 
@@ -91,7 +91,7 @@ const Navbar = () => {
           </div>
           <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-lg border border-white/20">
             <Droplets className="h-4 w-4 text-cyan-200" />
-            <span className="text-xs font-semibold text-white">AHT21</span>
+            <span className="text-xs font-semibold text-white">SHT1</span>
           </div>
           <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-lg border border-white/20">
             <Gauge className="h-4 w-4 text-purple-200" />

@@ -185,28 +185,6 @@ const Hero = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-cyan-500 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-800">AHT21</h3>
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            </div>
-            <p className="text-sm text-slate-600 mb-3">Sensor Kelembaban</p>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500">Suhu</span>
-                <span className="text-sm font-semibold text-slate-800">
-                  28.3°C
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500">Kelembaban</span>
-                <span className="text-sm font-semibold text-slate-800">
-                  73%
-                </span>
-              </div>
-            </div>
-          </div>
-
           <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-purple-500 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-slate-800">GP2Y1010AU0F</h3>
