@@ -1,305 +1,306 @@
 import React, { useState, useEffect } from "react";
-import {
-  MapPin,
-  Droplets,
-  Wind,
-  Eye,
-  TrendingUp,
-  TrendingDown,
-  Clock,
-} from "lucide-react";
+import { MapPin, Cloud, Droplets, Wind, Sun, TrendingUp } from "lucide-react";
 
 const Hero = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [sensorData, setSensorData] = useState({
+    aqi: 1,
+    temperature: 0,
+    humidity: 0,
+    tvoc: 0,
+    eco2: 0,
+    dust: 0,
+    pm25: 0,
+    pm10: 0,
+  });
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Simulasi data - nanti bisa diganti dengan data real dari sensor
-  const aqiValue = 78;
-  const aqiStatus = "Sedang";
-  const aqiColor = "bg-yellow-400";
-  const location = "Bandung, Jawa Barat";
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("http://192.168.1.10:5000/data");
+        const data = await res.json();
+        setSensorData(data);
+      } catch (error) {
+        console.error("Gagal memuat data sensor:", error);
+      }
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getAQIInfo = (aqi) => {
+    if (aqi <= 1)
+      return {
+        color: "from-green-400 to-emerald-500",
+        label: "Baik",
+        desc: "Udara bersih dan sehat.",
+        level: 1,
+      };
+    if (aqi <= 2)
+      return {
+        color: "from-yellow-400 to-amber-500",
+        label: "Sedang",
+        desc: "Masih dapat diterima.",
+        level: 2,
+      };
+    if (aqi <= 3)
+      return {
+        color: "from-orange-400 to-orange-500",
+        label: "Tidak Sehat",
+        desc: "Kurang baik untuk kelompok sensitif.",
+        level: 3,
+      };
+    if (aqi <= 4)
+      return {
+        color: "from-red-500 to-rose-600",
+        label: "Sangat Tidak Sehat",
+        desc: "Berisiko bagi semua kelompok.",
+        level: 4,
+      };
+    return {
+      color: "from-purple-500 to-fuchsia-600",
+      label: "Berbahaya",
+      desc: "Darurat kesehatan masyarakat.",
+      level: 5,
+    };
+  };
+
+
+  const aqiInfo = getAQIInfo(sensorData.aqi);
 
   return (
-    <section className="font-poppins bg-gradient-to-b from-slate-50 to-white">
-      {/* Main AQI Display */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* Location & Time Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div className="flex items-center space-x-3">
-            <MapPin className="h-6 w-6 text-slate-600" />
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800">{location}</h1>
-              <p className="text-sm text-slate-500">
-                Pemantauan Kualitas Udara Real-Time
-              </p>
-            </div>
+    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen text-slate-100">
+      <div className="max-w-7xl mx-auto px-4 py-10">
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+            Indeks Kualitas Udara (AQI)
+          </h1>
+          <p className="text-slate-400 text-sm">
+            Pemantauan kualitas udara dan parameter lingkungan secara real-time
+          </p>
+        </div>
+
+        {/* AQI Section */}
+        <div className="flex flex-col items-center justify-center mt-10 mb-12">
+          <div
+            className={`relative w-52 h-52 rounded-full flex flex-col items-center justify-center bg-gradient-to-br ${aqiInfo.color} shadow-[0_0_25px_5px_rgba(0,0,0,0.5)] transition-all duration-700`}
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-900/30 to-transparent rounded-full"></div>
+            <div className="absolute inset-1 rounded-full bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 shadow-inner"></div>
+            <div className="absolute inset-[6px] rounded-full bg-gradient-to-b from-slate-900 to-slate-800"></div>
+            <p className="relative text-6xl font-extrabold text-white drop-shadow-lg z-10">
+              {sensorData.aqi ?? "--"}
+            </p>
+            <p className="relative text-lg font-semibold text-slate-200 mt-1 tracking-wide z-10">
+              {aqiInfo.label}
+            </p>
           </div>
-          <div className="flex items-center space-x-2 text-slate-600">
-            <Clock className="h-5 w-5" />
-            <span className="text-sm">
-              Terakhir Diperbarui: {currentTime.toLocaleTimeString("id-ID")} WIB
+
+          <p className="text-slate-400 text-center mt-4 text-sm max-w-sm">
+            {aqiInfo.desc}
+          </p>
+
+          <div className="flex items-center space-x-2 mt-4">
+            <MapPin className="h-4 w-4 text-cyan-400" />
+            <span className="text-xs text-slate-400">Bandung, Jawa Barat</span>
+            <span className="text-xs text-slate-500">•</span>
+            <span className="text-xs text-slate-400">
+              {currentTime.toLocaleTimeString("id-ID", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              })}{" "}
+              WIB
             </span>
           </div>
         </div>
 
-        {/* Main AQI Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden mb-8">
-          <div className="grid md:grid-cols-2 gap-0">
-            {/* Left: AQI Value */}
-            <div className="bg-gradient-to-br from-slate-50 to-white p-8 md:p-12 flex flex-col justify-center items-center border-r border-slate-200">
+        {/* Data Ringkasan Cuaca */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
+          <InfoCard
+            icon={<Sun className="h-6 w-6 text-yellow-400" />}
+            title="Suhu"
+            value={`${sensorData.temperature ?? "--"}°C`}
+            subtitle="Cerah sebagian"
+          />
+          <InfoCard
+            icon={<Droplets className="h-6 w-6 text-blue-400" />}
+            title="Kelembaban"
+            value={`${sensorData.humidity ?? "--"}%`}
+            subtitle="Normal"
+          />
+          <InfoCard
+            icon={<Wind className="h-6 w-6 text-cyan-400" />}
+            title="TVOC"
+            value={`${sensorData.tvoc ?? "--"} ppb`}
+            subtitle="Kualitas udara"
+          />
+          <InfoCard
+            icon={<Cloud className="h-6 w-6 text-purple-400" />}
+            title="eCO₂"
+            value={`${sensorData.eco2 ?? "--"} ppm`}
+            subtitle="Karbon dioksida"
+          />
+          <InfoCard
+            icon={<TrendingUp className="h-6 w-6 text-gray-300" />}
+            title="Dust"
+            value={`${sensorData.dust ?? "--"} µg/m³`}
+            subtitle="Partikel debu"
+          />
+        </div>
+
+        {/* Kartu Sensor */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 mb-10">
+          {[
+            {
+              title: "SHT31",
+              desc: "Sensor Suhu & Kelembaban",
+              color: "from-blue-500 to-blue-600",
+              data: [
+                { label: "Temperature", value: `${sensorData.temperature ?? "--"}°C` },
+                { label: "Humidity", value: `${sensorData.humidity ?? "--"}%` },
+              ],
+            },
+            {
+              title: "GP2Y1010AU0F",
+              desc: "Sensor Debu & Partikel",
+              color: "from-purple-500 to-purple-600",
+              data: [
+                { label: "Dust", value: `${sensorData.dust ?? "--"} µg/m³` },
+              ],
+            },
+            {
+              title: "ENS160",
+              desc: "Sensor Kualitas Udara",
+              color: "from-green-500 to-teal-600",
+              data: [
+                { label: "VOC", value: `${sensorData.tvoc ?? "--"} ppb` },
+                { label: "eCO₂", value: `${sensorData.eco2 ?? "--"} ppm` },
+              ],
+            },
+          ].map((sensor, i) => (
+            <div
+              key={i}
+              className="bg-slate-800 rounded-2xl shadow-lg overflow-hidden border border-slate-700 hover:border-cyan-500 transition-all"
+            >
               <div
-                className={`w-40 h-40 ${aqiColor} rounded-full flex items-center justify-center shadow-lg mb-4`}
+                className={`bg-gradient-to-r ${sensor.color} p-4 text-white`}
               >
-                <div className="text-center">
-                  <div className="text-5xl font-bold text-white">
-                    {aqiValue}
-                  </div>
-                  <div className="text-sm font-semibold text-white mt-1">
-                    AQI
+                <div className="flex items-center justify-between">
+                  <h4 className="text-lg font-bold">{sensor.title}</h4>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
+                    <span className="text-xs font-semibold">LIVE</span>
                   </div>
                 </div>
+                <p className="text-xs opacity-90">{sensor.desc}</p>
               </div>
-              <h2 className="text-3xl font-bold text-slate-800 mb-2">
-                {aqiStatus}
-              </h2>
-              <p className="text-sm text-slate-600 text-center max-w-xs">
-                Kualitas udara dapat diterima untuk sebagian besar individu
-              </p>
-            </div>
-
-            {/* Right: Environmental Data */}
-            <div className="p-8 md:p-12 bg-white">
-              <h3 className="text-lg font-bold text-slate-800 mb-6">
-                Data Lingkungan Saat Ini
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <svg
-                        className="h-5 w-5 text-blue-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500">Suhu</p>
-                      <p className="text-lg font-bold text-slate-800">28.5°C</p>
-                    </div>
+              <div className="p-5 space-y-3">
+                {sensor.data.map((d, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between bg-slate-700/40 rounded-lg p-3"
+                  >
+                    <span className="text-sm text-slate-300">{d.label}</span>
+                    <span className="text-lg font-semibold text-white">
+                      {d.value}
+                    </span>
                   </div>
-                  <div className="flex items-center space-x-1 text-green-600">
-                    <TrendingUp className="h-4 w-4" />
-                    <span className="text-xs font-medium">Normal</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-cyan-100 p-2 rounded-lg">
-                      <Droplets className="h-5 w-5 text-cyan-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500">Kelembaban</p>
-                      <p className="text-lg font-bold text-slate-800">73%</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-1 text-blue-600">
-                    <TrendingUp className="h-4 w-4" />
-                    <span className="text-xs font-medium">Tinggi</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-purple-100 p-2 rounded-lg">
-                      <Wind className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500">Kecepatan Angin</p>
-                      <p className="text-lg font-bold text-slate-800">8 km/h</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-1 text-slate-600">
-                    <span className="text-xs font-medium">Tenang</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-orange-100 p-2 rounded-lg">
-                      <Eye className="h-5 w-5 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500">PM2.5</p>
-                      <p className="text-lg font-bold text-slate-800">
-                        32 µg/m³
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-1 text-yellow-600">
-                    <span className="text-xs font-medium">Sedang</span>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
-          </div>
+          ))}
         </div>
+      
+{/* Skala AQI (Sederhana, Cerah & Nyaman Dilihat) */}
+<div className="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-8 shadow-md backdrop-blur-sm">
+  <h3 className="text-2xl font-bold text-white mb-6 text-center">
+    Skala Indeks Kualitas Udara (AQI)
+  </h3>
 
-        {/* Sensor Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-800">SHT31</h3>
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            </div>
-            <p className="text-sm text-slate-600 mb-3">
-              Sensor Suhu & Kelembaban
-            </p>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500">Suhu</span>
-                <span className="text-sm font-semibold text-slate-800">
-                  28.5°C
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500">Kelembaban</span>
-                <span className="text-sm font-semibold text-slate-800">
-                  72%
-                </span>
-              </div>
-            </div>
-          </div>
+  <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+    {[
+      {
+        level: "1️⃣",
+        label: "Baik",
+        desc: "Udara bersih dan sehat",
+        color: "bg-gradient-to-br from-green-300 to-emerald-400",
+      },
+      {
+        level: "2️⃣",
+        label: "Sedang",
+        desc: "Masih dapat diterima",
+        color: "bg-gradient-to-br from-yellow-300 to-amber-400",
+      },
+      {
+        level: "3️⃣",
+        label: "Tidak Sehat",
+        desc: "Kurang baik untuk kelompok sensitif",
+        color: "bg-gradient-to-br from-orange-300 to-orange-500",
+      },
+      {
+        level: "4️⃣",
+        label: "Sangat Tidak Sehat",
+        desc: "Berisiko bagi semua kelompok",
+        color: "bg-gradient-to-br from-red-400 to-rose-500",
+      },
+      {
+        level: "5️⃣",
+        label: "Berbahaya",
+        desc: "Darurat kesehatan masyarakat",
+        color: "bg-gradient-to-br from-purple-400 to-fuchsia-500",
+      },
+    ].map((item, i) => (
+      <div
+        key={i}
+        className={`${item.color} rounded-xl p-4 text-center text-white shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300`}
+      >
+        <div className="text-2xl font-bold mb-1">{item.level}</div>
+        <p className="text-base font-semibold">{item.label}</p>
+        <p className="text-xs text-white/90 mt-1">{item.desc}</p>
+      </div>
+    ))}
+  </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-cyan-500 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-800">AHT21</h3>
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            </div>
-            <p className="text-sm text-slate-600 mb-3">Sensor Kelembaban</p>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500">Suhu</span>
-                <span className="text-sm font-semibold text-slate-800">
-                  28.3°C
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500">Kelembaban</span>
-                <span className="text-sm font-semibold text-slate-800">
-                  73%
-                </span>
-              </div>
-            </div>
-          </div>
+  <p className="text-center text-slate-400 text-xs mt-6">
+    Skala AQI digunakan untuk mengukur tingkat kualitas udara berdasarkan konsentrasi polutan.
+  </p>
+</div>
 
-          <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-purple-500 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-800">GP2Y1010AU0F</h3>
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            </div>
-            <p className="text-sm text-slate-600 mb-3">
-              Sensor Debu & Partikel
-            </p>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500">PM2.5</span>
-                <span className="text-sm font-semibold text-slate-800">
-                  32 µg/m³
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500">PM10</span>
-                <span className="text-sm font-semibold text-slate-800">
-                  45 µg/m³
-                </span>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-green-500 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-800">ENS160</h3>
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            </div>
-            <p className="text-sm text-slate-600 mb-3">Sensor Kualitas Udara</p>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500">VOC</span>
-                <span className="text-sm font-semibold text-slate-800">
-                  125 ppb
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500">eCO2</span>
-                <span className="text-sm font-semibold text-slate-800">
-                  420 ppm
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* AQI Scale Reference */}
-        <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">
-            Skala Indeks Kualitas Udara
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-            <div className="text-center p-3 bg-green-50 rounded-lg border-2 border-green-400">
-              <div className="text-2xl font-bold text-green-700">0-50</div>
-              <div className="text-xs font-semibold text-green-700 mt-1">
-                Baik
-              </div>
-            </div>
-            <div className="text-center p-3 bg-yellow-50 rounded-lg border-2 border-yellow-400">
-              <div className="text-2xl font-bold text-yellow-700">51-100</div>
-              <div className="text-xs font-semibold text-yellow-700 mt-1">
-                Sedang
-              </div>
-            </div>
-            <div className="text-center p-3 bg-orange-50 rounded-lg border-2 border-orange-400">
-              <div className="text-2xl font-bold text-orange-700">101-150</div>
-              <div className="text-xs font-semibold text-orange-700 mt-1">
-                Tidak Sehat
-              </div>
-            </div>
-            <div className="text-center p-3 bg-red-50 rounded-lg border-2 border-red-400">
-              <div className="text-2xl font-bold text-red-700">151-200</div>
-              <div className="text-xs font-semibold text-red-700 mt-1">
-                Sangat Tidak Sehat
-              </div>
-            </div>
-            <div className="text-center p-3 bg-purple-50 rounded-lg border-2 border-purple-400">
-              <div className="text-2xl font-bold text-purple-700">201-300</div>
-              <div className="text-xs font-semibold text-purple-700 mt-1">
-                Berbahaya
-              </div>
-            </div>
-            <div className="text-center p-3 bg-rose-50 rounded-lg border-2 border-rose-600">
-              <div className="text-2xl font-bold text-rose-700">300+</div>
-              <div className="text-xs font-semibold text-rose-700 mt-1">
-                Sangat Berbahaya
-              </div>
-            </div>
-          </div>
+        {/* Timestamp */}
+        <div className="text-right text-xs text-slate-400 mt-4">
+          Terakhir diperbarui:{" "}
+          {currentTime.toLocaleString("id-ID", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })}
         </div>
       </div>
-    </section>
+    </div>
   );
 };
+
+const InfoCard = ({ icon, title, value, subtitle }) => (
+  <div className="bg-slate-800 rounded-xl p-5 border border-slate-700 hover:border-slate-500 transition-all duration-300">
+    <div className="flex items-center space-x-3 mb-2">
+      {icon}
+      <p className="text-sm font-semibold text-slate-300">{title}</p>
+    </div>
+    <p className="text-3xl font-bold text-white">{value}</p>
+    <p className="text-xs text-slate-400 mt-1">{subtitle}</p>
+  </div>
+);
+
 export default Hero;
