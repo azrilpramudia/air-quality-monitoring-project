@@ -1,18 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Wind, Droplets, Gauge, Activity } from "lucide-react";
 
 const Navbar = () => {
-  const [activeTime, setActiveTime] = useState(new Date().toLocaleTimeString('id-ID'));
+  const [activeTime, setActiveTime] = useState(
+    new Date().toLocaleTimeString("id-ID")
+  );
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setInterval(() => {
-      setActiveTime(new Date().toLocaleTimeString('id-ID'));
+      setActiveTime(new Date().toLocaleTimeString("id-ID"));
     }, 1000);
     return () => clearInterval(timer);
   }, []);
 
   return (
-    <nav className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-500 shadow-lg">
+    <nav className="bg-gradient-to-r from-[#22292E] to-[#2A4E5D] shadow-lg font-poppins">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Title Section */}
@@ -24,7 +26,9 @@ const Navbar = () => {
               <h1 className="text-xl font-bold text-white tracking-tight">
                 Air Quality Monitor
               </h1>
-              <p className="text-slate-200 text-xs">Real-time Environmental Data</p>
+              <p className="text-slate-200 text-xs">
+                Real-time Environmental Data
+              </p>
             </div>
           </div>
 
@@ -33,7 +37,9 @@ const Navbar = () => {
             <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/20">
               <Droplets className="h-4 w-4 text-slate-200" />
               <div>
-                <p className="text-xs text-slate-300 leading-tight">Temperature</p>
+                <p className="text-xs text-slate-300 leading-tight">
+                  Temperature
+                </p>
                 <p className="text-xs font-semibold text-white">SHT31</p>
               </div>
             </div>
@@ -57,7 +63,9 @@ const Navbar = () => {
             <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/20">
               <Activity className="h-4 w-4 text-slate-200" />
               <div>
-                <p className="text-xs text-slate-300 leading-tight">Air Quality</p>
+                <p className="text-xs text-slate-300 leading-tight">
+                  Air Quality
+                </p>
                 <p className="text-xs font-semibold text-white">ENS160</p>
               </div>
             </div>
@@ -69,7 +77,9 @@ const Navbar = () => {
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span className="text-slate-200 text-xs font-medium">Live</span>
             </div>
-            <p className="text-white font-mono text-base font-semibold">{activeTime}</p>
+            <p className="text-white font-mono text-base font-semibold">
+              {activeTime}
+            </p>
           </div>
         </div>
 
