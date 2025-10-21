@@ -17,7 +17,7 @@ const Hero = () => {
   const aqiColor = "bg-yellow-400";
   const location = "Bandung, Jawa Barat";
 
-  return (
+  return(
     <section className="bg-gradient-to-b from-slate-50 to-white">
       {/* Main AQI Display */}
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -230,9 +230,4 @@ const Hero = () => {
             </div>
           </div>
         </div>
-      </div>
-    </section>
-  );
-};
-
 export default Hero;
