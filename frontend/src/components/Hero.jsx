@@ -5,13 +5,11 @@ const Hero = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [sensorData, setSensorData] = useState({
     aqi: 1,
-    temperature: 0,
-    humidity: 0,
-    tvoc: 0,
-    eco2: 0,
-    dust: 0,
-    pm25: 0,
-    pm10: 0,
+    temperature: 25,
+    humidity: 82,
+    tvoc: 50,
+    eco2: 30,
+    dust: 56.4,
   });
 
   useEffect(() => {
@@ -70,7 +68,6 @@ const Hero = () => {
       level: 5,
     };
   };
-
 
   const aqiInfo = getAQIInfo(sensorData.aqi);
 
@@ -164,7 +161,10 @@ const Hero = () => {
               desc: "Sensor Suhu & Kelembaban",
               color: "from-blue-500 to-blue-600",
               data: [
-                { label: "Temperature", value: `${sensorData.temperature ?? "--"}°C` },
+                {
+                  label: "Temperature",
+                  value: `${sensorData.temperature ?? "--"}°C`,
+                },
                 { label: "Humidity", value: `${sensorData.humidity ?? "--"}%` },
               ],
             },
@@ -218,62 +218,62 @@ const Hero = () => {
             </div>
           ))}
         </div>
-      
-{/* Skala AQI (Sederhana, Cerah & Nyaman Dilihat) */}
-<div className="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-8 shadow-md backdrop-blur-sm">
-  <h3 className="text-2xl font-bold text-white mb-6 text-center">
-    Skala Indeks Kualitas Udara (AQI)
-  </h3>
 
-  <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-    {[
-      {
-        level: "1️⃣",
-        label: "Baik",
-        desc: "Udara bersih dan sehat",
-        color: "bg-gradient-to-br from-green-300 to-emerald-400",
-      },
-      {
-        level: "2️⃣",
-        label: "Sedang",
-        desc: "Masih dapat diterima",
-        color: "bg-gradient-to-br from-yellow-300 to-amber-400",
-      },
-      {
-        level: "3️⃣",
-        label: "Tidak Sehat",
-        desc: "Kurang baik untuk kelompok sensitif",
-        color: "bg-gradient-to-br from-orange-300 to-orange-500",
-      },
-      {
-        level: "4️⃣",
-        label: "Sangat Tidak Sehat",
-        desc: "Berisiko bagi semua kelompok",
-        color: "bg-gradient-to-br from-red-400 to-rose-500",
-      },
-      {
-        level: "5️⃣",
-        label: "Berbahaya",
-        desc: "Darurat kesehatan masyarakat",
-        color: "bg-gradient-to-br from-purple-400 to-fuchsia-500",
-      },
-    ].map((item, i) => (
-      <div
-        key={i}
-        className={`${item.color} rounded-xl p-4 text-center text-white shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300`}
-      >
-        <div className="text-2xl font-bold mb-1">{item.level}</div>
-        <p className="text-base font-semibold">{item.label}</p>
-        <p className="text-xs text-white/90 mt-1">{item.desc}</p>
-      </div>
-    ))}
-  </div>
+        {/* Skala AQI (Sederhana, Cerah & Nyaman Dilihat) */}
+        <div className="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-8 shadow-md backdrop-blur-sm">
+          <h3 className="text-2xl font-bold text-white mb-6 text-center">
+            Skala Indeks Kualitas Udara (AQI)
+          </h3>
 
-  <p className="text-center text-slate-400 text-xs mt-6">
-    Skala AQI digunakan untuk mengukur tingkat kualitas udara berdasarkan konsentrasi polutan.
-  </p>
-</div>
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+            {[
+              {
+                level: "1️⃣",
+                label: "Baik",
+                desc: "Udara bersih dan sehat",
+                color: "bg-gradient-to-br from-green-300 to-emerald-400",
+              },
+              {
+                level: "2️⃣",
+                label: "Sedang",
+                desc: "Masih dapat diterima",
+                color: "bg-gradient-to-br from-yellow-300 to-amber-400",
+              },
+              {
+                level: "3️⃣",
+                label: "Tidak Sehat",
+                desc: "Kurang baik untuk kelompok sensitif",
+                color: "bg-gradient-to-br from-orange-300 to-orange-500",
+              },
+              {
+                level: "4️⃣",
+                label: "Sangat Tidak Sehat",
+                desc: "Berisiko bagi semua kelompok",
+                color: "bg-gradient-to-br from-red-400 to-rose-500",
+              },
+              {
+                level: "5️⃣",
+                label: "Berbahaya",
+                desc: "Darurat kesehatan masyarakat",
+                color: "bg-gradient-to-br from-purple-400 to-fuchsia-500",
+              },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className={`${item.color} rounded-xl p-4 text-center text-white shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300`}
+              >
+                <div className="text-2xl font-bold mb-1">{item.level}</div>
+                <p className="text-base font-semibold">{item.label}</p>
+                <p className="text-xs text-white/90 mt-1">{item.desc}</p>
+              </div>
+            ))}
+          </div>
 
+          <p className="text-center text-slate-400 text-xs mt-6">
+            Skala AQI digunakan untuk mengukur tingkat kualitas udara
+            berdasarkan konsentrasi polutan.
+          </p>
+        </div>
 
         {/* Timestamp */}
         <div className="text-right text-xs text-slate-400 mt-4">
