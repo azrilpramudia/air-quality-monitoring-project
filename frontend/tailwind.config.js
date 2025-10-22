@@ -6,9 +6,11 @@ export default {
   ],
   theme: {
     extend: {
-      colors: {
-        slateglass: "rgba(148, 163, 184, 0.15)", // efek abu-abu transparan untuk glassmorphism
-      },
+      fontFamily: {
+        poppins: ["Poppins"],
+          colors: {
+            slateglass: "rgba(148, 163, 184, 0.15)", // efek abu-abu transparan untuk glassmorphism
+          },
       keyframes: {
         glowPulse: {
           "0%, 100%": {
@@ -37,5 +39,6 @@ export default {
       },
     },
   },
+},
   plugins: [],
 };
