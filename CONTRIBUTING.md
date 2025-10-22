@@ -60,7 +60,6 @@ git push origin feature/add-lvgl-ui
 
 - Open a pull request (PR) to the `main` branch.
 - Clearly describe what you changed or fixed.
-- Assign reviewers if needed (Azril, Prawira, Miraaldina).
 
 ---
 
