@@ -9,11 +9,11 @@
 #include <PubSubClient.h>     // Added: MQTT library
 
 // ------------------- WiFi & MQTT Config -------------------
-#define WIFI_SSID "LCS-Guest"
-#define WIFI_PASS "lcsguestwifi2025"
-#define MQTT_SERVER "broker.emqx.io"
-#define MQTT_PORT 1883
-#define MQTT_TOPIC "air/quality"
+#define WIFI_SSID "" // input your wifi ssid
+#define WIFI_PASS ""  // input your wifi password
+#define MQTT_SERVER "" // input your mqtt server local or global
+#define MQTT_PORT // "1883" input your port
+#define MQTT_TOPIC "air/quality" // input your topic
 
 WiFiClient espClient;
 PubSubClient client(espClient);
