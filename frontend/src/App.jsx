@@ -1,4 +1,3 @@
-import Footer from "./components/Footer";
 import Hero from "./components/Hero";
 import SensorDetail from "./components/SensorDetail";
 import Navbar from "./components/Navbar";
@@ -10,11 +9,11 @@ function App() {
   return (
     <>
       <Navbar />
-      <Hero/>
-      <SensorDetail/>
-      <AQIModal/>
-      <SensorChartModal/>
-      <Footer/>
+      <Hero />
+      <SensorDetail />
+      <AQIModal />
+      <SensorChartModal />
+      <Footer />
     </>
   );
 }

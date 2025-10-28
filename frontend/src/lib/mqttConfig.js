@@ -4,6 +4,7 @@ const topic = import.meta.env.VITE_MQTT_TOPIC || "air/quality";
 
 const BROKER_LIST = [
   "wss://broker.hivemq.com:8884/mqtt", // HTTPS secure
+  "wss://broker.emqx.io:8084/mqtt", // EMQX secure
   "wss://mqtt.eclipseprojects.io/mqtt", // Fallback ke Eclipse
   "ws://localhost:9001", // Untuk Mosquitto lokal
 ];
