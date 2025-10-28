@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
+import mqtt from "mqtt";
 import {
   MapPin,
   Cloud,
@@ -14,7 +15,6 @@ import SensorDetail from "./SensorDetail.jsx";
 import AQIModal from "./AQIModal.jsx";
 import SensorChartModal from "./SensorChartModal.jsx";
 
-// Improved CSS animations - lebih smooth dan konsisten
 const styles = `
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
@@ -84,22 +84,54 @@ const Hero = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Hubungkan ke MQTT Broker
+  // ================== 🔌 MQTT Integration ==================
   useEffect(() => {
-    const fetchData = async () => {
+    const MQTT_BROKER =
+      import.meta.env.VITE_MQTT_URL || "wss://broker.emqx.io:8084/mqtt";
+    const MQTT_TOPIC = import.meta.env.VITE_MQTT_TOPIC || "air/quality";
+
+    const client = mqtt.connect(MQTT_BROKER, {
+      clientId: "react_dashboard_" + Math.random().toString(16).substring(2, 8),
+      reconnectPeriod: 3000,
+      clean: true,
+    });
+
+    client.on("connect", () => {
+      console.log("✅ Connected to MQTT Broker:", MQTT_BROKER);
+      setIsConnected(true);
+      client.subscribe(MQTT_TOPIC, (err) => {
+        if (!err) console.log("📡 Subscribed to:", MQTT_TOPIC);
+      });
+    });
+
+    client.on("message", (topic, message) => {
       try {
-        const API_URL =
-          import.meta.env.VITE_API_URL ?? "wss://broker.emqx.io:8084/mqtt";
-        const res = await fetch(`${API_URL}/data`);
-        const data = await res.json();
-        setSensorData(data);
-      } catch (error) {
-        console.error("Gagal memuat data sensor:", error);
+        const data = JSON.parse(message.toString());
+        setSensorData({
+          aqi: data.aqi ?? 0,
+          temperature: data.temp ?? 0,
+          humidity: data.hum ?? 0,
+          tvoc: data.tvoc ?? 0,
+          eco2: data.eco2 ?? 0,
+          dust: data.dust ?? 0,
+        });
+        console.log("📊 MQTT Data:", data);
+      } catch (err) {
+        console.error("⚠️ Invalid MQTT JSON:", message.toString());
       }
-    };
-    fetchData();
-    const interval = setInterval(fetchData, 3000);
-    return () => clearInterval(interval);
+    });
+
+    client.on("error", (err) => {
+      console.error("🚨 MQTT Error:", err.message);
+      setIsConnected(false);
+    });
+
+    client.on("close", () => {
+      console.warn("🔌 Disconnected from MQTT broker");
+      setIsConnected(false);
+    });
+
+    return () => client.end();
   }, []);
 
   useEffect(() => {
