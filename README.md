@@ -96,14 +96,6 @@ Make sure the following libraries are installed in **Arduino IDE** or **Platform
 4. Connect your ESP32 and upload the code
 5. Observe sensor readings on the TFT or Serial Monitor
 
-## 👤 Contributors
-
-| Name              | GitHub Account                                    |
-| ----------------- | ------------------------------------------------- |
-| **azrilpramudia** | [azrilpramudia](https://github.com/azrilpramudia) |
-| **prawira26**     | [prawira26](https://github.com/prawira26)         |
-| **miraaldina**    | [miraaldina](https://github.com/miraaldina)       |
-
 ---
 
 ## ⭐ Support

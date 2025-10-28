@@ -60,7 +60,6 @@ git push origin feature/add-lvgl-ui
 
 - Open a pull request (PR) to the `main` branch.
 - Clearly describe what you changed or fixed.
-- Assign reviewers if needed (Azril, Prawira, Miraaldina).
 
 ---
 
@@ -94,17 +93,9 @@ Before submitting:
 
 ## 👥 Contributors
 
-<p>
-  <a href="https://github.com/azrilpramudia">
-    <img src="https://github.com/azrilpramudia.png" width="80" style="clip-path: circle(50%); margin:10px;">
-  </a>
-  <a href="https://github.com/prawira26">
-    <img src="https://github.com/prawira26.png" width="80" style="clip-path: circle(50%); margin:10px;">
-  </a>
-  <a href="https://github.com/miraaldina">
-    <img src="https://github.com/miraaldina.png" width="80" style="clip-path: circle(50%); margin:10px;">
-  </a>
-</p>
+Thanks to these amazing people for their contributions 💪
+
+[![Contributors](https://contrib.rocks/image?repo=azrilpramudia/air-quality-monitoring-project)](https://github.com/azrilpramudia/air-quality-monitoring-project/graphs/contributors)
 
 ## 💬 Need Help?
 

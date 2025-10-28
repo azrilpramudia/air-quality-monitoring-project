@@ -51,6 +51,7 @@ const Hero = () => {
   const [showAQIModal, setShowAQIModal] = useState(false);
   const [selectedAQILevel, setSelectedAQILevel] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isConnected, setIsConnected] = useState(false);
   const [sensorData, setSensorData] = useState({
     aqi: 0,
     temperature: 0,
@@ -58,8 +59,6 @@ const Hero = () => {
     tvoc: 0,
     eco2: 0,
     dust: 0,
-    pm25: 0,
-    pm10: 0,
   });
   const [chartModal, setChartModal] = useState({
     isOpen: false,
@@ -69,11 +68,13 @@ const Hero = () => {
     color: null
   });
 
+  // Update waktu tiap detik
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  // Hubungkan ke MQTT Broker
   useEffect(() => {
     const fetchData = async () => {
       try {
