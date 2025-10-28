@@ -12,7 +12,8 @@ const Navbar = () => {
   );
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [isConnected, setIsConnected] = useState(false); // ✅ MQTT status
+  const [isConnected, setIsConnected] = useState(false);
+  const [blinkRed, setBlinkRed] = useState(false); // 🔴 Blink indicator
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -53,22 +54,33 @@ const Navbar = () => {
       clean: true,
     });
 
+    let disconnectTimer;
+
     client.on("connect", () => {
       console.log("✅ Connected to MQTT Broker (Navbar):", MQTT_BROKER);
       setIsConnected(true);
+      setBlinkRed(false);
+      clearTimeout(disconnectTimer);
       client.subscribe(MQTT_TOPIC, (err) => {
         if (!err) console.log("📡 Subscribed (Navbar):", MQTT_TOPIC);
       });
     });
 
-    client.on("close", () => setIsConnected(false));
-    client.on("error", () => setIsConnected(false));
+    const handleDisconnect = () => {
+      setIsConnected(false);
+      disconnectTimer = setTimeout(() => setBlinkRed(true), 5000);
+    };
 
-    return () => client.end();
+    client.on("close", handleDisconnect);
+    client.on("error", handleDisconnect);
+
+    return () => {
+      clearTimeout(disconnectTimer);
+      client.end();
+    };
   }, []);
   // =========================================================
 
-  // Nav actions
   const goTop = () => {
     if (window.location.hash !== "#top") window.location.hash = "#top";
     document
@@ -157,12 +169,16 @@ const Navbar = () => {
         </div>
 
         {/* live time + MQTT status */}
-        <div className="flex items-center gap-3 rounded-xl border border-cyan-300/10 bg-[#0B1628]/70 px-3 py-2 shadow-sm">
-          {/* MQTT status indicator */}
+        <div className="flex items-center gap-2 sm:gap-3 rounded-xl border border-cyan-300/10 bg-[#0B1628]/70 px-2.5 sm:px-3 py-2 shadow-sm">
+          {/* MQTT status */}
           <div className="flex items-center gap-1">
             <div
               className={`w-2.5 h-2.5 rounded-full ${
-                isConnected ? "bg-green-400 animate-pulse" : "bg-red-500"
+                isConnected
+                  ? "bg-green-400 animate-pulse"
+                  : blinkRed
+                  ? "bg-red-500 animate-ping"
+                  : "bg-red-500"
               }`}
             ></div>
             <span
@@ -174,19 +190,19 @@ const Navbar = () => {
             </span>
           </div>
 
-          <span className="w-px h-4 bg-cyan-300/15" />
+          <span className="hidden sm:block w-px h-4 bg-cyan-300/15" />
 
           {/* LIVE indicator */}
           <span className="relative flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40 animate-ping" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
           </span>
-          <span className="text-[11px] font-semibold tracking-wider text-emerald-300">
+          <span className="hidden sm:inline text-[11px] font-semibold tracking-wider text-emerald-300">
             LIVE
           </span>
 
-          <span className="w-px h-4 bg-cyan-300/15" />
-          <time className="font-mono text-[13px] font-semibold bg-gradient-to-r from-cyan-200 to-blue-200 bg-clip-text text-transparent">
+          <span className="hidden sm:block w-px h-4 bg-cyan-300/15" />
+          <time className="font-mono text-[12px] sm:text-[13px] font-semibold bg-gradient-to-r from-cyan-200 to-blue-200 bg-clip-text text-transparent">
             {activeTime}
           </time>
         </div>
