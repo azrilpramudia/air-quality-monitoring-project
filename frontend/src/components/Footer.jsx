@@ -51,7 +51,7 @@ const Footer = () => {
                 { Icon: Clock, text: "Monitoring Real-time" },
                 { Icon: TrendingUp, text: "Grafik Historis" },
                 { Icon: Shield, text: "Data Akurat" },
-                { Icon: Zap, text: "Update 3 Detik" },
+                { Icon: Zap, text: "Update 1 Detik" },
               ].map(({ Icon, text }, i) => (
                 <li
                   key={i}
