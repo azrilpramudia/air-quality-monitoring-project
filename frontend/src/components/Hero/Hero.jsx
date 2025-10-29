@@ -14,7 +14,7 @@ import {
 import SensorDetail from "../SensorDetail/SensorDetail.jsx";
 import AQIModal from "../Modals/AQIModal.jsx";
 import SensorChartModal from "../Modals/SensorChartModal.jsx";
-import { herostyles as styles } from "./Hero.Styles.js";
+import { herostyles as styles } from "../../styles/Hero.Styles.js";
 import { getAQIInfo } from "../../utils/getAQIInfo.js";
 import { useMQTT } from "../../hooks/useMQTT.js";
 

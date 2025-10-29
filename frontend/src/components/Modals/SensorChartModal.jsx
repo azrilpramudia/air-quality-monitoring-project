@@ -2,7 +2,7 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { X, TrendingUp, Calendar, Download } from "lucide-react";
-import { styles } from "./SensorChartModal.Styles.js";
+import { styles } from "../../styles/SensorChartModal.Styles.js";
 
 const SensorChartModal = ({
   isOpen,

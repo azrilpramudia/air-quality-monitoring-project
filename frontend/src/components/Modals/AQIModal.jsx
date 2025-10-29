@@ -8,7 +8,7 @@ import {
   Leaf,
   Wind,
 } from "lucide-react";
-import { styles } from "./AQIModal.Styles.js";
+import { styles } from "../../styles/AQIModal.Styles.js";
 
 const AQIModal = ({ isOpen, onClose, level, aqiInfo }) => {
   if (!isOpen || !level) return null;
