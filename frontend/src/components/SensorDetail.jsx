@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { ArrowLeft, Activity, Info, TrendingUp } from "lucide-react";
 import SensorChartModal from "./SensorChartModal";
 import mqtt from "mqtt";
@@ -30,6 +31,14 @@ const SensorDetail = ({ sensorType, onBack }) => {
     color: null,
   });
   const [isConnected, setIsConnected] = useState(false);
+
+  // ================== TAMBAHAN: scroll instan ke atas saat pertama kali komponen muncul ==================
+  useLayoutEffect(() => {
+    if (typeof window !== "undefined" && window.scrollY > 0) {
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+  }, []);
+  // ======================================================================================================
 
   // ================== 🔌 MQTT Integration ==================
   useEffect(() => {
@@ -82,7 +91,26 @@ const SensorDetail = ({ sensorType, onBack }) => {
   }, []);
   // =========================================================
 
+  // Kunci scroll saat modal terbuka & auto-scroll ke atas
+  useEffect(() => {
+    if (chartModal.isOpen) {
+      document.body.style.overflow = "hidden";
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [chartModal.isOpen]);
+
   const openChartModal = (type, value, icon, color) => {
+    // Pastikan view pindah ke atas sebelum modal muncul
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
     setChartModal({
       isOpen: true,
       sensorType: type,
@@ -269,7 +297,7 @@ const SensorDetail = ({ sensorType, onBack }) => {
               <div className="flex items-center space-x-2 bg-slate-800/60 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-700">
                 <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
                 <span className="text-xs font-medium text-slate-300">
-                  Update setiap 3 detik
+                  Update setiap 1 detik
                 </span>
               </div>
             </div>
@@ -358,7 +386,7 @@ const SensorDetail = ({ sensorType, onBack }) => {
             </div>
           </section>
 
-          {/* Sensor Information dengan layout lebih menarik */}
+          {/* Sensor Information */}
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
             <section
               className="bg-slate-900/40 backdrop-blur-xl rounded-3xl p-6 md:p-8 border border-slate-700/50 shadow-2xl animate-slide-up hover:border-cyan-500/30 transition-all duration-300"
@@ -405,7 +433,7 @@ const SensorDetail = ({ sensorType, onBack }) => {
             </section>
           </div>
 
-          {/* Applications dengan grid card yang lebih menarik */}
+          {/* Applications */}
           <section
             className="bg-slate-900/40 backdrop-blur-xl rounded-3xl p-6 md:p-8 border border-slate-700/50 shadow-2xl animate-slide-up"
             style={{ animationDelay: "0.4s" }}
@@ -432,15 +460,29 @@ const SensorDetail = ({ sensorType, onBack }) => {
         </div>
       </div>
 
-      {/* Chart Modal */}
-      <SensorChartModal
-        isOpen={chartModal.isOpen}
-        onClose={closeChartModal}
-        sensorType={chartModal.sensorType}
-        currentValue={chartModal.currentValue}
-        icon={chartModal.icon}
-        color={chartModal.color}
-      />
+      {/* Chart Modal via Portal + fixed overlay agar tampil di paling atas */}
+      {chartModal.isOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={closeChartModal}
+            />
+            {/* Modal content */}
+            <div className="relative z-10 max-h-[90vh] w-full max-w-3xl overflow-auto">
+              <SensorChartModal
+                isOpen={chartModal.isOpen}
+                onClose={closeChartModal}
+                sensorType={chartModal.sensorType}
+                currentValue={chartModal.currentValue}
+                icon={chartModal.icon}
+                color={chartModal.color}
+              />
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 };
