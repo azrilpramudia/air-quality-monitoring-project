@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, Activity, Info, TrendingUp } from "lucide-react";
-import SensorChartModal from "./SensorChartModal";
+import SensorChartModal from "../Modals/SensorChartModal.jsx";
 import mqtt from "mqtt";
 
 // Custom CSS animations
