@@ -1,24 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { X, TrendingUp, Calendar, Download } from "lucide-react";
-
-const styles = `
-  @keyframes modalIn {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  .animate-modal-in {
-    animation: modalIn 0.3s ease-out;
-  }
-`;
+import { styles } from "./SensorChartModal.Styles.js";
 
 const SensorChartModal = ({
   isOpen,

@@ -3,23 +3,8 @@ import React, { useState, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, Activity, Info, TrendingUp } from "lucide-react";
 import SensorChartModal from "../Modals/SensorChartModal.jsx";
+import { styles } from "./SensorDetail.Styles.js";
 import mqtt from "mqtt";
-
-// Custom CSS animations
-const styles = `
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes slide-up {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .animate-fade-in { animation: fade-in 0.6s ease-out; }
-  .animate-slide-up { animation: slide-up 0.6s ease-out; animation-fill-mode: both; }
-`;
 
 const SensorDetail = ({ sensorType, onBack }) => {
   const [currentData, setCurrentData] = useState({});

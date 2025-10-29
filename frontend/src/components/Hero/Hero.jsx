@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import mqtt from "mqtt";
 import {
   MapPin,
@@ -16,6 +16,7 @@ import AQIModal from "../Modals/AQIModal.jsx";
 import SensorChartModal from "../Modals/SensorChartModal.jsx";
 import { herostyles as styles } from "./Hero.Styles.js";
 import { getAQIInfo } from "../../utils/getAQIInfo.js";
+import { useMQTT } from "../../hooks/useMQTT.js";
 
 import { motion, AnimatePresence } from "framer-motion";
 const pageMotionProps = {
