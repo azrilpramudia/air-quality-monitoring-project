@@ -16,7 +16,6 @@ import AQIModal from "../Modals/AQIModal.jsx";
 import SensorChartModal from "../Modals/SensorChartModal.jsx";
 import { herostyles as styles } from "../../styles/Hero.Styles.js";
 import { getAQIInfo } from "../../utils/getAQIInfo.js";
-import { useMQTT } from "../../hooks/useMQTT.js";
 
 import { motion, AnimatePresence } from "framer-motion";
 const pageMotionProps = {
