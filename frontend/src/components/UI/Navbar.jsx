@@ -99,11 +99,12 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`sticky top-0 z-50 transition-all duration-300 backdrop-blur-md font-poppins ${
+      className={[
+        "sticky top-0 z-50 transition-all duration-300 backdrop-blur-xl font-poppins",
         scrolled
-          ? "bg-[rgba(4,10,24,0.92)] ring-1 ring-cyan-300/10 shadow-lg"
-          : "bg-[rgba(4,10,24,0.72)] ring-1 ring-cyan-300/10 shadow"
-      }`}
+          ? "bg-transparent bg-gradient-to-b from-[rgba(4,10,24,0.6)] to-[rgba(4,10,24,0.4)] ring-1 ring-cyan-300/10 shadow-lg backdrop-saturate-150"
+          : "bg-transparent bg-gradient-to-b from-[rgba(4,10,24,0.3)] to-[rgba(4,10,24,0.1)] ring-1 ring-cyan-300/5 shadow-md backdrop-saturate-150",
+      ].join(" ")}
       aria-label="Global Navigation"
     >
       {/* progress bar */}
