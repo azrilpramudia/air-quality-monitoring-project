@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Wind, Droplets, Gauge, Activity } from "lucide-react";
 import mqtt from "mqtt";
 
@@ -97,7 +97,7 @@ const Navbar = () => {
   return (
     <nav
       className={[
-        "sticky top-0 z-50 transition-all duration-300 backdrop-blur-md",
+        "sticky top-0 z-50 transition-all duration-300 backdrop-blur-md font-poppins",
         scrolled
           ? "bg-[rgba(4,10,24,0.92)] ring-1 ring-cyan-300/10 shadow-lg"
           : "bg-[rgba(4,10,24,0.72)] ring-1 ring-cyan-300/10 shadow",
