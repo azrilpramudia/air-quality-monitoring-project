@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        poppins: ["Poppins"],
+        poppins: ["Poppins", "sans-serif"],
           colors: {
             slateglass: "rgba(148, 163, 184, 0.15)", // efek abu-abu transparan untuk glassmorphism
           },
