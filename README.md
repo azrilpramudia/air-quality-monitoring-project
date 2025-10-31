@@ -98,7 +98,7 @@ Make sure the following libraries are installed in **Arduino IDE** or **Platform
 
 ---
 
-## 🔐 `.env_example`
+## 🔐 .env_example
 
 If you are integrating this system with a **web dashboard** or **MQTT broker**, create a `.env` file in your frontend project root (for example, Vite or React project) and copy the template below:
 
