@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { Wind, Droplets, Gauge, Activity } from "lucide-react";
-import { useMQTT } from "../../hooks/useMQTT"; // ✅ ambil dari hook global
+import { useMQTT } from "../../hooks/useMQTT";
 
 const Navbar = () => {
   const [activeTime, setActiveTime] = useState(

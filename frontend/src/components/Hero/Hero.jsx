@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Toaster, toast } from "react-hot-toast";
 
 // ====== Hooks ======
-import { useMQTT } from "../../hooks/useMQTT.js"; // MQTT Hooks Global Connection
+import { useMQTT } from "../../hooks/useMQTT.js";
 
 // ====== Components ======
 import AQICircleDisplay from "./AQICircleDisplay.jsx";
