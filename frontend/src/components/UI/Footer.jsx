@@ -16,13 +16,13 @@ const Footer = () => {
 
   return (
     <footer className="relative isolate bg-slate-950 text-slate-300 border-t border-slate-800 mt-auto">
-      {/* Garis atas halus */}
+      {/* Smooth top line */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-800 to-transparent pointer-events-none" />
 
-      {/* Latar belakang lembut */}
+      {/* Soft background */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-950 to-black pointer-events-none" />
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-16 pb-6">
-        {/* Grid utama */}
+        {/* Main Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-16 mb-16">
           {/* Brand */}
           <div className="space-y-6">
@@ -41,7 +41,7 @@ const Footer = () => {
             </p>
           </div>
 
-          {/* Fitur Utama */}
+          {/* Main Feature */}
           <div>
             <h4 className="text-white/90 font-semibold text-xs uppercase tracking-[0.12em] mb-4">
               Fitur Utama
@@ -64,7 +64,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Kontak */}
+          {/* Contact */}
           <div>
             <h4 className="text-white/90 font-semibold text-xs uppercase tracking-[0.12em] mb-4">
               Kontak
@@ -101,7 +101,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Tim */}
+          {/* Team */}
           <div>
             <h4 className="text-white/90 font-semibold text-xs uppercase tracking-[0.12em] mb-4">
               Tim Pengembang
@@ -127,12 +127,12 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Divider lebih ramping */}
+        {/* Slimmer divider */}
         <div className="mx-auto my-6 h-px w-[85%] max-w-5xl bg-gradient-to-r from-transparent via-slate-700/70 to-transparent" />
 
         {/* Bottom Section */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          {/* GitHub dipindah ke kiri, tepat sebelum © */}
+          {/* GitHub moved to the left, right before © */}
           <div className="flex items-center gap-3 text-sm text-slate-400">
             <a
               href="https://github.com/azrilpramudia/air-quality-monitoring-project"
@@ -153,7 +153,7 @@ const Footer = () => {
             </span>
           </div>
 
-          {/* (tautan Privasi/Syarat/FAQ dihapus) */}
+          {/* (Privacy/Terms/FAQ link removed) */}
         </div>
 
         {/* Status Badge */}
@@ -170,7 +170,7 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Garis bawah */}
+      {/* Underline */}
       <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-slate-800/70 to-transparent pointer-events-none" />
     </footer>
   );

@@ -55,7 +55,7 @@ const Hero = () => {
     return () => clearInterval(t);
   }, []);
 
-  // === Alert Toast (gunakan data dari useMQTT) ===
+  // === Alert Toast ===
   useEffect(() => {
     if (!sensorData) return;
 

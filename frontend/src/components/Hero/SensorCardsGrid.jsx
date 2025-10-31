@@ -1,4 +1,3 @@
-import React from "react";
 import { ChevronRight } from "lucide-react";
 
 const SensorCardsGrid = ({ sensorData, handleSensorClick }) => {
@@ -65,10 +64,10 @@ const SensorCardsGrid = ({ sensorData, handleSensorClick }) => {
       {sensors.map((sensor, i) => (
         <div
           key={i}
-          onClick={() => handleSensorClick(sensor.type)} // ✅ klik seluruh card
+          onClick={() => handleSensorClick(sensor.type)} // Pass sensor type on click
           className="group relative glass-effect rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 cursor-pointer hover:-translate-y-2 border border-slate-700/50 hover:border-cyan-500/50 flex flex-col"
         >
-          {/* Header warna gradasi */}
+          {/* Header Gradationt Color */}
           <div
             className={`relative bg-gradient-to-r ${sensor.color} p-5 sm:p-6 text-white overflow-hidden`}
           >
@@ -92,7 +91,7 @@ const SensorCardsGrid = ({ sensorData, handleSensorClick }) => {
             </div>
           </div>
 
-          {/* Body isi sensor */}
+          {/* Body Sensor */}
           <div className="p-5 sm:p-6 space-y-3 bg-gradient-to-b from-slate-900/40 to-slate-800/40 flex-1">
             {sensor.data.map((d, idx) => (
               <div

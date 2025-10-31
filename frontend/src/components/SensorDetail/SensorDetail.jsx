@@ -4,10 +4,10 @@ import { createPortal } from "react-dom";
 import { ArrowLeft, Activity, Info, TrendingUp } from "lucide-react";
 import SensorChartModal from "../Modals/SensorChartModal.jsx";
 import { styles } from "../../styles/SensorDetail.Styles.js";
-import { useMQTT } from "../../hooks/useMQTT.js"; // ✅ Import hook global
+import { useMQTT } from "../../hooks/useMQTT.js";
 
 const SensorDetail = ({ sensorType, onBack }) => {
-  const { data: mqttData, isConnected, activeBroker } = useMQTT(); // ✅ Ambil data & status dari hook
+  const { data: mqttData, isConnected, activeBroker } = useMQTT();
   const [chartModal, setChartModal] = useState({
     isOpen: false,
     sensorType: null,
@@ -16,14 +16,14 @@ const SensorDetail = ({ sensorType, onBack }) => {
     color: null,
   });
 
-  // Scroll instan ke atas saat pertama render
+  // Scroll to top on mount
   useLayoutEffect(() => {
     if (typeof window !== "undefined" && window.scrollY > 0) {
       window.scrollTo({ top: 0, behavior: "auto" });
     }
   }, []);
 
-  // Lock scroll saat modal terbuka
+  // Lock scroll when modal is open
   useEffect(() => {
     if (chartModal.isOpen) {
       document.body.style.overflow = "hidden";
@@ -122,7 +122,7 @@ const SensorDetail = ({ sensorType, onBack }) => {
     return null;
   }
 
-  // Ambil data dari hook global (mqttData)
+  // ================= CURRENT DATA =================
   const currentData = mqttData || {};
 
   return (

@@ -9,7 +9,7 @@ const DEBUG = import.meta.env.VITE_MQTT_DEBUG === "true";
 let client;
 
 /**
- * 🔌 Connect ke MQTT broker dari .env
+ * 🔌 Connect to MQTT Broker
  */
 export const connectMQTT = (onMessage, onConnectionChange, onBrokerChange) => {
   const clientId = CLIENT_PREFIX + Math.random().toString(16).substring(2, 8);
@@ -19,7 +19,7 @@ export const connectMQTT = (onMessage, onConnectionChange, onBrokerChange) => {
 
   client = mqtt.connect(MQTT_BROKER, {
     clientId,
-    reconnectPeriod: 4000, // reconnect otomatis setiap 4 detik
+    reconnectPeriod: 4000, // Reconnect every 4 seconds
     connectTimeout: 5000,
     clean: true,
   });

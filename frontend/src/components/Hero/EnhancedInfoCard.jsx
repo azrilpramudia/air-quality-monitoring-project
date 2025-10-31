@@ -1,4 +1,3 @@
-import React from "react";
 import { TrendingUp } from "lucide-react";
 
 const EnhancedInfoCard = ({ icon, title, value, subtitle, color, onClick }) => (

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { Wind, Droplets, Gauge, Activity } from "lucide-react";
 import { useMQTT } from "../../hooks/useMQTT"; // ✅ ambil dari hook global
@@ -12,11 +13,21 @@ const Navbar = () => {
   );
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
-
-  // ✅ Ambil status koneksi global dari hook MQTT
+  const [wasConnected, setWasConnected] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
   const { isConnected } = useMQTT();
 
-  // Update waktu tiap detik
+  // Detection Reconnecting
+  useEffect(() => {
+    if (wasConnected && !isConnected) {
+      setIsReconnecting(true);
+    } else if (isConnected) {
+      setIsReconnecting(false);
+    }
+    setWasConnected(isConnected);
+  }, [isConnected]);
+
+  // Updated active time every second
   useEffect(() => {
     const t = setInterval(() => {
       setActiveTime(
@@ -45,7 +56,7 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Navigasi antar halaman
+  // Navigate to top
   const goTop = () => {
     if (window.location.hash !== "#top") window.location.hash = "#top";
     document
@@ -128,15 +139,25 @@ const Navbar = () => {
               className={`w-2.5 h-2.5 rounded-full ${
                 isConnected
                   ? "bg-green-400 animate-pulse"
+                  : isReconnecting
+                  ? "bg-yellow-400 animate-pulse"
                   : "bg-red-500 animate-ping"
               }`}
             ></div>
             <span
               className={`font-semibold ${
-                isConnected ? "text-emerald-300" : "text-red-400"
+                isConnected
+                  ? "text-emerald-300"
+                  : isReconnecting
+                  ? "text-yellow-300"
+                  : "text-red-400"
               }`}
             >
-              {isConnected ? "Connected" : "Disconnected"}
+              {isConnected
+                ? "Connected"
+                : isReconnecting
+                ? "Reconnecting..."
+                : "Disconnected"}
             </span>
           </div>
 
@@ -153,7 +174,7 @@ const Navbar = () => {
 
           <span className="hidden sm:block w-px h-4 bg-cyan-300/15" />
 
-          {/* Waktu aktif */}
+          {/* Time Active */}
           <time className="font-mono text-[11px] sm:text-[12px] bg-gradient-to-r from-cyan-200 to-blue-200 bg-clip-text text-transparent font-semibold">
             {activeTime}
           </time>

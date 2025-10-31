@@ -51,7 +51,7 @@ const AQIModal = ({ isOpen, onClose, level, aqiInfo }) => {
               </div>
             </div>
 
-            {/* Detail Kondisi */}
+            {/* Detail Condition */}
             <div
               className={`${aqiInfo.bgColor} border ${aqiInfo.borderColor} rounded-2xl p-6 mb-6`}
             >
@@ -66,7 +66,7 @@ const AQIModal = ({ isOpen, onClose, level, aqiInfo }) => {
               </p>
             </div>
 
-            {/* Dampak Kesehatan */}
+            {/* Health Impact */}
             <div className="mb-6">
               <h3 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
                 <Heart className="h-6 w-6 text-red-400" />
@@ -87,7 +87,7 @@ const AQIModal = ({ isOpen, onClose, level, aqiInfo }) => {
               </div>
             </div>
 
-            {/* Langkah Perlindungan */}
+            {/* Protective Steps */}
             <div className="mb-6">
               <h3 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
                 <CheckCircle className="h-6 w-6 text-green-400" />
@@ -113,7 +113,7 @@ const AQIModal = ({ isOpen, onClose, level, aqiInfo }) => {
               </div>
             </div>
 
-            {/* Rekomendasi */}
+            {/* Recomendation */}
             <div
               className={`${aqiInfo.bgColor} border-l-4 ${aqiInfo.borderColor} rounded-r-2xl p-6`}
             >

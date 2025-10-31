@@ -17,7 +17,7 @@ const SensorChartModal = ({
 
   useEffect(() => {
     if (isOpen && sensorType) {
-      // Simulasi data historis (replace dengan API call yang sebenarnya)
+      // Historical data simulation (replace with actual API calls)
       generateMockData();
     }
   }, [isOpen, sensorType, timeRange]);
