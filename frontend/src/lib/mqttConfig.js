@@ -1,98 +1,59 @@
+/* eslint-disable no-unused-vars */
 import mqtt from "mqtt";
 
-const topic = import.meta.env.VITE_MQTT_TOPIC || "air/quality";
+const MQTT_BROKER = import.meta.env.VITE_MQTT_URL || "wss://broker.emqx.io:8084/mqtt";
+const MQTT_TOPIC = import.meta.env.VITE_MQTT_TOPIC || "air/quality";
+const CLIENT_PREFIX = import.meta.env.VITE_MQTT_CLIENT_PREFIX || "react_client_";
+const DEBUG = import.meta.env.VITE_MQTT_DEBUG === "true";
 
-const BROKER_LIST = [
-  "wss://broker.hivemq.com:8884/mqtt", // HTTPS secure
-  "wss://broker.emqx.io:8084/mqtt",    // EMQX secure
-  "wss://mqtt.eclipseprojects.io/mqtt", // Fallback Eclipse
-  "ws://localhost:9001",                // Local Mosquitto
-];
+let client;
 
 /**
- * Auto detect protokol (http/https)
- * Kalau di localhost pakai ws://
+ * 🔌 Connect ke MQTT broker dari .env
  */
-const getBrokerURL = () => {
-  const envBroker = import.meta.env.VITE_MQTT_URL;
-  if (envBroker) return envBroker;
+export const connectMQTT = (onMessage, onConnectionChange, onBrokerChange) => {
+  const clientId = CLIENT_PREFIX + Math.random().toString(16).substring(2, 8);
 
-  const isHttps = window.location.protocol === "https:";
-  return isHttps ? BROKER_LIST[0] : "ws://broker.hivemq.com:8000/mqtt";
-};
+  DEBUG && console.log(`🔌 Connecting to ${MQTT_BROKER} as ${clientId}`);
+  onBrokerChange?.(MQTT_BROKER);
 
-let currentBrokerIndex = 0;
+  client = mqtt.connect(MQTT_BROKER, {
+    clientId,
+    reconnectPeriod: 4000, // reconnect otomatis setiap 4 detik
+    connectTimeout: 5000,
+    clean: true,
+  });
 
-/**
- * Fungsi utama untuk koneksi MQTT
- * @returns {mqtt.MqttClient} client instance untuk cleanup
- */
-export const connectMQTT = (onMessageCallback, onConnectionChange) => {
-  let client = null;
-
-  const tryConnect = (brokerUrl) => {
-    console.log(`🔌 Connecting to broker: ${brokerUrl}`);
-
-    client = mqtt.connect(brokerUrl, {
-      clientId: "ReactClient_" + Math.random().toString(16).substring(2, 8),
-      reconnectPeriod: 3000,
-      connectTimeout: 4000,
-      clean: true,
+  client.on("connect", () => {
+    DEBUG && console.log(`✅ Connected to ${MQTT_BROKER}`);
+    onConnectionChange?.(true);
+    client.subscribe(MQTT_TOPIC, (err) => {
+      if (err) console.error("❌ Failed to subscribe:", err);
+      else DEBUG && console.log(`📡 Subscribed to topic: ${MQTT_TOPIC}`);
     });
+  });
 
-    // === On Connected ===
-    client.on("connect", () => {
-      console.log(`✅ Connected to MQTT Broker: ${brokerUrl}`);
-      onConnectionChange?.(true);
-
-      client.subscribe(topic, (err) => {
-        if (err) console.error("❌ Failed to subscribe:", err.message);
-        else console.log("📡 Subscribed to:", topic);
-      });
-    });
-
-    // === On Message ===
-    client.on("message", (receivedTopic, message) => {
-      if (receivedTopic === topic) {
-        try {
-          const data = JSON.parse(message.toString());
-          onMessageCallback?.(data);
-        } catch {
-          console.error("⚠️ Invalid JSON from broker:", message.toString());
-        }
+  client.on("message", (topic, message) => {
+    if (topic === MQTT_TOPIC) {
+      try {
+        const data = JSON.parse(message.toString());
+        onMessage?.(data);
+        DEBUG && console.log("📊 Incoming data:", data);
+      } catch (err) {
+        console.warn("⚠️ Invalid JSON:", message.toString());
       }
-    });
+    }
+  });
 
-    // === On Reconnect ===
-    client.on("reconnect", () => {
-      console.warn("🔁 Reconnecting to broker...");
-      onConnectionChange?.(false);
-    });
+  client.on("close", () => {
+    console.warn("⚠️ Disconnected from broker:", MQTT_BROKER);
+    onConnectionChange?.(false);
+  });
 
-    // === On Error ===
-    client.on("error", (err) => {
-      console.error("🚨 MQTT Error:", err.message || err);
-      onConnectionChange?.(false);
-    });
+  client.on("error", (err) => {
+    console.error("🚨 MQTT Error:", err.message);
+    onConnectionChange?.(false);
+  });
 
-    // === On Close (retry logic) ===
-    client.on("close", () => {
-      console.warn("⚠️ Disconnected from broker:", brokerUrl);
-      onConnectionChange?.(false);
-
-      if (currentBrokerIndex < BROKER_LIST.length - 1) {
-        currentBrokerIndex++;
-        const nextBroker = BROKER_LIST[currentBrokerIndex];
-        console.log(`⏳ Retrying with next broker: ${nextBroker}`);
-        setTimeout(() => tryConnect(nextBroker), 2000);
-      } else {
-        console.error("❌ All MQTT brokers failed to connect.");
-      }
-    });
-
-    return client;
-  };
-
-  const initialBroker = getBrokerURL();
-  return tryConnect(initialBroker);
+  return client;
 };

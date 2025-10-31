@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Wind, Droplets, Gauge, Activity } from "lucide-react";
-import mqtt from "mqtt";
+import { useMQTT } from "../../hooks/useMQTT"; // ✅ ambil dari hook global
 
 const Navbar = () => {
   const [activeTime, setActiveTime] = useState(
@@ -12,8 +12,9 @@ const Navbar = () => {
   );
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [isConnected, setIsConnected] = useState(false);
-  const [blinkRed, setBlinkRed] = useState(false);
+
+  // ✅ Ambil status koneksi global dari hook MQTT
+  const { isConnected } = useMQTT();
 
   // Update waktu tiap detik
   useEffect(() => {
@@ -42,44 +43,6 @@ const Navbar = () => {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // MQTT connection
-  useEffect(() => {
-    const MQTT_BROKER =
-      import.meta.env.VITE_MQTT_URL || "wss://broker.emqx.io:8084/mqtt";
-    const MQTT_TOPIC = import.meta.env.VITE_MQTT_TOPIC || "air/quality";
-
-    const client = mqtt.connect(MQTT_BROKER, {
-      clientId: "react_navbar_" + Math.random().toString(16).substring(2, 8),
-      reconnectPeriod: 3000,
-      clean: true,
-    });
-
-    let disconnectTimer;
-
-    client.on("connect", () => {
-      console.log("✅ Connected to MQTT Broker (Navbar):", MQTT_BROKER);
-      setIsConnected(true);
-      setBlinkRed(false);
-      clearTimeout(disconnectTimer);
-      client.subscribe(MQTT_TOPIC, (err) => {
-        if (!err) console.log("📡 Subscribed (Navbar):", MQTT_TOPIC);
-      });
-    });
-
-    const handleDisconnect = () => {
-      setIsConnected(false);
-      disconnectTimer = setTimeout(() => setBlinkRed(true), 5000);
-    };
-
-    client.on("close", handleDisconnect);
-    client.on("error", handleDisconnect);
-
-    return () => {
-      clearTimeout(disconnectTimer);
-      client.end();
-    };
   }, []);
 
   // Navigasi antar halaman
@@ -165,9 +128,7 @@ const Navbar = () => {
               className={`w-2.5 h-2.5 rounded-full ${
                 isConnected
                   ? "bg-green-400 animate-pulse"
-                  : blinkRed
-                  ? "bg-red-500 animate-ping"
-                  : "bg-red-500"
+                  : "bg-red-500 animate-ping"
               }`}
             ></div>
             <span
@@ -191,6 +152,8 @@ const Navbar = () => {
           </span>
 
           <span className="hidden sm:block w-px h-4 bg-cyan-300/15" />
+
+          {/* Waktu aktif */}
           <time className="font-mono text-[11px] sm:text-[12px] bg-gradient-to-r from-cyan-200 to-blue-200 bg-clip-text text-transparent font-semibold">
             {activeTime}
           </time>

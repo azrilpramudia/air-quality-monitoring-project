@@ -1,8 +1,10 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
-import mqtt from "mqtt";
 import { motion, AnimatePresence } from "framer-motion";
 import { Toaster, toast } from "react-hot-toast";
+
+// ====== Hooks ======
+import { useMQTT } from "../../hooks/useMQTT.js"; // MQTT Hooks Global Connection
 
 // ====== Components ======
 import AQICircleDisplay from "./AQICircleDisplay.jsx";
@@ -33,20 +35,12 @@ const THRESHOLDS = {
 const AIR_ALERT_ID = "air-alert";
 
 const Hero = () => {
+  const { data: sensorData, isConnected } = useMQTT();
   const [currentView, setCurrentView] = useState("dashboard");
   const [selectedSensor, setSelectedSensor] = useState(null);
   const [showAQIModal, setShowAQIModal] = useState(false);
   const [selectedAQILevel, setSelectedAQILevel] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [isConnected, setIsConnected] = useState(false);
-  const [sensorData, setSensorData] = useState({
-    aqi: 0,
-    temperature: 0,
-    humidity: 0,
-    tvoc: 0,
-    eco2: 0,
-    dust: 0,
-  });
   const [chartModal, setChartModal] = useState({
     isOpen: false,
     sensorType: null,
@@ -55,152 +49,110 @@ const Hero = () => {
     color: null,
   });
 
-  // === Time ===
+  // === Time Update ===
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // === MQTT Connection ===
+  // === Alert Toast (gunakan data dari useMQTT) ===
   useEffect(() => {
-    const MQTT_BROKER =
-      import.meta.env.VITE_MQTT_URL || "wss://broker.emqx.io:8084/mqtt";
-    const MQTT_TOPIC = import.meta.env.VITE_MQTT_TOPIC || "air/quality";
+    if (!sensorData) return;
 
-    const client = mqtt.connect(MQTT_BROKER, {
-      clientId: "react_dashboard_" + Math.random().toString(16).slice(2, 8),
-      reconnectPeriod: 3000,
-      clean: true,
-    });
+    const highDust = sensorData.dust > THRESHOLDS.dust;
+    const highAQI = sensorData.aqi >= THRESHOLDS.aqi;
 
-    client.on("connect", () => {
-      setIsConnected(true);
-      client.subscribe(
-        MQTT_TOPIC,
-        (err) => !err && console.log("📡 Subscribed:", MQTT_TOPIC)
-      );
-    });
+    if (highDust || highAQI) {
+      toast.custom(
+        (t) => (
+          <div
+            className={`${
+              t.visible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 -translate-y-2"
+            } transition-all duration-300`}
+          >
+            <div className="glass-effect rounded-lg shadow-lg border border-slate-600/40 max-w-md">
+              <div className="p-3 flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500/20 to-amber-500/20 flex items-center justify-center border border-rose-500/30">
+                    <span className="text-lg">⚠️</span>
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <h4 className="text-sm font-bold text-white">
+                      Peringatan Kualitas Udara
+                    </h4>
+                    <button
+                      onClick={() => toast.dismiss(AIR_ALERT_ID)}
+                      className="text-slate-400 hover:text-white transition-colors"
+                    >
+                      ✖
+                    </button>
+                  </div>
 
-    client.on("message", (_topic, message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        const mapped = {
-          aqi: Number(data.aqi ?? 0),
-          temperature: Number(data.temp ?? 0),
-          humidity: Number(data.hum ?? 0),
-          tvoc: Number(data.tvoc ?? 0),
-          eco2: Number(data.eco2 ?? 0),
-          dust: Number(data.dust ?? 0),
-        };
-        setSensorData(mapped);
-
-        // ====== Toast Alert ======
-        const highDust = mapped.dust > THRESHOLDS.dust;
-        const highAQI = mapped.aqi >= THRESHOLDS.aqi;
-
-        if (highDust || highAQI) {
-          toast.custom(
-            (t) => (
-              <div
-                className={`${
-                  t.visible
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 -translate-y-2"
-                } transition-all duration-300`}
-              >
-                <div className="glass-effect rounded-lg shadow-lg border border-slate-600/40 max-w-md">
-                  <div className="p-3 flex items-start gap-3">
-                    <div className="flex-shrink-0 mt-0.5">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500/20 to-amber-500/20 flex items-center justify-center border border-rose-500/30">
-                        <span className="text-lg">⚠️</span>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <h4 className="text-sm font-bold text-white">
-                          Peringatan Kualitas Udara
-                        </h4>
-                        <button
-                          onClick={() => toast.dismiss(AIR_ALERT_ID)}
-                          className="text-slate-400 hover:text-white transition-colors"
-                        >
-                          ✖
-                        </button>
-                      </div>
-
-                      {/* Alert Items */}
-                      <div className="space-y-2">
-                        {highDust && (
-                          <div className="flex items-center justify-between bg-slate-800/40 rounded-md px-2.5 py-1.5 border border-rose-500/20">
-                            <div className="flex items-center gap-2">
-                              <span className="text-base">💨</span>
-                              <div>
-                                <p className="text-xs font-semibold text-white">
-                                  Debu Tinggi
-                                </p>
-                                <p className="text-[10px] text-slate-400">
-                                  Gunakan masker
-                                </p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-bold text-rose-400">
-                                {mapped.dust}
-                              </p>
-                              <p className="text-[9px] text-slate-500">µg/m³</p>
-                            </div>
+                  {/* Alert Items */}
+                  <div className="space-y-2">
+                    {highDust && (
+                      <div className="flex items-center justify-between bg-slate-800/40 rounded-md px-2.5 py-1.5 border border-rose-500/20">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">💨</span>
+                          <div>
+                            <p className="text-xs font-semibold text-white">
+                              Debu Tinggi
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              Gunakan masker
+                            </p>
                           </div>
-                        )}
-                        {highAQI && (
-                          <div className="flex items-center justify-between bg-slate-800/40 rounded-md px-2.5 py-1.5 border border-amber-500/20">
-                            <div className="flex items-center gap-2">
-                              <span className="text-base">😷</span>
-                              <div>
-                                <p className="text-xs font-semibold text-white">
-                                  AQI Tinggi
-                                </p>
-                                <p className="text-[10px] text-slate-400">
-                                  Batasi aktivitas
-                                </p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-bold text-amber-400">
-                                Level {mapped.aqi}
-                              </p>
-                              <p className="text-[9px] text-slate-500">AQI</p>
-                            </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-rose-400">
+                            {sensorData.dust}
+                          </p>
+                          <p className="text-[9px] text-slate-500">µg/m³</p>
+                        </div>
+                      </div>
+                    )}
+                    {highAQI && (
+                      <div className="flex items-center justify-between bg-slate-800/40 rounded-md px-2.5 py-1.5 border border-amber-500/20">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">😷</span>
+                          <div>
+                            <p className="text-xs font-semibold text-white">
+                              AQI Tinggi
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              Batasi aktivitas
+                            </p>
                           </div>
-                        )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-amber-400">
+                            Level {sensorData.aqi}
+                          </p>
+                          <p className="text-[9px] text-slate-500">AQI</p>
+                        </div>
                       </div>
+                    )}
+                  </div>
 
-                      <div className="mt-2 pt-2 border-t border-slate-700/50">
-                        <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                          <span className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></span>
-                          Pembaruan real-time
-                        </p>
-                      </div>
-                    </div>
+                  <div className="mt-2 pt-2 border-t border-slate-700/50">
+                    <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></span>
+                      Pembaruan real-time
+                    </p>
                   </div>
                 </div>
               </div>
-            ),
-            { id: AIR_ALERT_ID, duration: Infinity, position: "top-center" }
-          );
-        } else toast.dismiss(AIR_ALERT_ID);
-      } catch (e) {
-        console.error("⚠️ Invalid MQTT JSON:", message.toString());
-      }
-    });
-
-    client.on("error", (err) => {
-      console.error("🚨 MQTT Error:", err.message);
-      setIsConnected(false);
-    });
-    client.on("close", () => setIsConnected(false));
-
-    return () => client.end();
-  }, []);
+            </div>
+          </div>
+        ),
+        { id: AIR_ALERT_ID, duration: Infinity, position: "top-center" }
+      );
+    } else toast.dismiss(AIR_ALERT_ID);
+  }, [sensorData]);
 
   // === Hash Navigation ===
   useEffect(() => {
@@ -241,8 +193,6 @@ const Hero = () => {
       default:
         window.location.hash = "#top";
     }
-
-    // efek tambahan opsional biar scroll halus ke atas
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -251,14 +201,17 @@ const Hero = () => {
     setSelectedSensor(null);
     window.location.hash = "#top";
   };
+
   const handleAQIClick = (level) => {
     setSelectedAQILevel(level);
     setShowAQIModal(true);
   };
+
   const closeAQIModal = () => {
     setShowAQIModal(false);
     setSelectedAQILevel(null);
   };
+
   const openChartModal = (type, value, icon, color) =>
     setChartModal({
       isOpen: true,
@@ -267,6 +220,7 @@ const Hero = () => {
       icon,
       color,
     });
+
   const closeChartModal = () =>
     setChartModal({
       isOpen: false,
