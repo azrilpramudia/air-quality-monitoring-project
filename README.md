@@ -59,11 +59,11 @@ Make sure the following libraries are installed in **Arduino IDE** or **Platform
 
 ## 🧠 How It Works
 
-1. **Sensor Initialization** – ESP32 initializes ENS160, SHT31, and GP2Y1010AU0F.
-2. **Data Reading** – Each sensor sends measured data (VOC, eCO₂, temperature, humidity, dust).
-3. **Data Compensation** – ENS160 uses temperature & humidity data from SHT31 for accurate calibration.
-4. **Display Output** – All values are shown on the ILI9431 screen using `LVGL` or `TFT_eSPI`.
-5. _(Optional)_ **Cloud Upload** – Data can be uploaded via Wi-Fi to Firebase or MQTT servers.
+1. **Sensor Initialization** – ESP32 initializes ENS160, SHT31, and GP2Y1010AU0F.  
+2. **Data Reading** – Each sensor sends measured data (VOC, eCO₂, temperature, humidity, dust).  
+3. **Data Compensation** – ENS160 uses temperature & humidity data from SHT31 for accurate calibration.  
+4. **Display Output** – All values are shown on the ILI9431 screen using `LVGL` or `TFT_eSPI`.  
+5. _(Optional)_ **Cloud Upload** – Data can be uploaded via Wi-Fi to Firebase or MQTT servers.  
 
 ---
 
@@ -95,6 +95,28 @@ Make sure the following libraries are installed in **Arduino IDE** or **Platform
 3. Install all required libraries
 4. Connect your ESP32 and upload the code
 5. Observe sensor readings on the TFT or Serial Monitor
+
+---
+
+## 🔐 `.env_example`
+
+If you are integrating this system with a **web dashboard** or **MQTT broker**, create a `.env` file in your frontend project root (for example, Vite or React project) and copy the template below:
+
+```bash
+# MQTT Configuration Example
+VITE_MQTT_URL=
+VITE_MQTT_TOPIC=
+VITE_MQTT_CLIENT_PREFIX=
+VITE_MQTT_DEBUG=
+```
+
+> 💡 Example:
+> ```
+> VITE_MQTT_URL=wss://broker.emqx.io:8084/mqtt
+> VITE_MQTT_TOPIC=esp32/airquality
+> VITE_MQTT_CLIENT_PREFIX=react_client_
+> VITE_MQTT_DEBUG=true
+> ```
 
 ---
 
