@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, TrendingUp, Calendar, Download } from "lucide-react";
 import { styles } from "../../styles/SensorChartModal.Styles.js";
+import { useMQTTContext } from "../../context/MQTTContext";
 
 const SensorChartModal = ({
   isOpen,
@@ -15,12 +16,47 @@ const SensorChartModal = ({
   const [chartData, setChartData] = useState([]);
   const [timeRange, setTimeRange] = useState("7d"); // 7d, 24h, 30d
 
+  // Access MQTT to messages
+  const { lastMessage } = useMQTTContext();
+
   useEffect(() => {
     if (isOpen && sensorType) {
-      // Historical data simulation (replace with actual API calls)
       generateMockData();
     }
   }, [isOpen, sensorType, timeRange]);
+
+  // Real-time MQTT update listener
+  useEffect(() => {
+    if (!lastMessage || !isOpen) return;
+
+    try {
+      const topic = lastMessage.topic;
+      const payload = JSON.parse(lastMessage.message || "{}");
+
+      // Adjust according to your topic structure
+      if (topic.includes(sensorType)) {
+        const newValue = parseFloat(payload.value);
+        if (!isNaN(newValue)) {
+          const newEntry = {
+            date: new Date().toLocaleDateString("id-ID", {
+              day: "2-digit",
+              month: "short",
+            }),
+            time: new Date().toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            value: newValue,
+          };
+
+          // Keep last 30 data points
+          setChartData((prev) => [...prev.slice(-29), newEntry]);
+        }
+      }
+    } catch (err) {
+      console.warn("⚠️ Error parsing MQTT message:", err);
+    }
+  }, [lastMessage, isOpen]);
 
   const generateMockData = () => {
     const days = timeRange === "24h" ? 24 : timeRange === "7d" ? 7 : 30;
@@ -30,23 +66,22 @@ const SensorChartModal = ({
       const date = new Date();
       date.setDate(date.getDate() - i);
 
-      // Generate realistic mock data based on sensor type
       let value;
       switch (sensorType) {
         case "temperature":
-          value = 25 + Math.random() * 10; // 25-35°C
+          value = 25 + Math.random() * 10;
           break;
         case "humidity":
-          value = 50 + Math.random() * 30; // 50-80%
+          value = 50 + Math.random() * 30;
           break;
         case "tvoc":
-          value = 100 + Math.random() * 400; // 100-500 ppb
+          value = 100 + Math.random() * 400;
           break;
         case "eco2":
-          value = 400 + Math.random() * 600; // 400-1000 ppm
+          value = 400 + Math.random() * 600;
           break;
         case "dust":
-          value = 10 + Math.random() * 90; // 10-100 µg/m³
+          value = 10 + Math.random() * 90;
           break;
         default:
           value = Math.random() * 100;
@@ -71,7 +106,7 @@ const SensorChartModal = ({
   const getSensorInfo = () => {
     const configs = {
       temperature: {
-        title: "Temperature",
+        title: "Suhu",
         unit: "°C",
         color: "from-yellow-500 to-orange-500",
         bgColor: "bg-yellow-500/10",
@@ -79,7 +114,7 @@ const SensorChartModal = ({
         lineColor: "#f59e0b",
       },
       humidity: {
-        title: "Humidity",
+        title: "Kelembapan",
         unit: "%",
         color: "from-blue-500 to-cyan-500",
         bgColor: "bg-blue-500/10",
@@ -103,7 +138,7 @@ const SensorChartModal = ({
         lineColor: "#a855f7",
       },
       dust: {
-        title: "Dust",
+        title: "Debu",
         unit: "µg/m³",
         color: "from-slate-500 to-slate-600",
         bgColor: "bg-slate-500/10",
@@ -130,8 +165,14 @@ const SensorChartModal = ({
 
   const sensorInfo = getSensorInfo();
   const stats = getStatistics();
-  const maxValue = Math.max(...chartData.map((d) => d.value));
-  const minValue = Math.min(...chartData.map((d) => d.value));
+  const values = chartData.map((d) => d.value);
+  const maxValue = Math.max(...values);
+  const minValue = Math.min(...values);
+
+  const safeY = (value) => {
+    if (maxValue === minValue || isNaN(value)) return 150;
+    return 300 - ((value - minValue) / (maxValue - minValue)) * 300;
+  };
 
   return (
     <>
@@ -144,7 +185,6 @@ const SensorChartModal = ({
           className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-slate-900/95 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl animate-modal-in"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Close Button */}
           <button
             onClick={onClose}
             className="sticky top-4 right-4 float-right z-10 p-2 bg-slate-800/80 hover:bg-slate-700 rounded-full transition-colors"
@@ -152,7 +192,6 @@ const SensorChartModal = ({
             <X className="h-6 w-6 text-white" />
           </button>
 
-          {/* Modal Content */}
           <div className="p-6 md:p-8">
             {/* Header */}
             <div
@@ -208,55 +247,48 @@ const SensorChartModal = ({
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div
-                className={`${sensorInfo.bgColor} border ${sensorInfo.borderColor} rounded-2xl p-5`}
-              >
-                <div className="flex items-center space-x-2 mb-2">
-                  <TrendingUp className="h-5 w-5 text-green-400" />
-                  <p className="text-sm text-slate-400 font-medium">Maksimum</p>
+              {[
+                {
+                  label: "Maksimum",
+                  value: stats.max,
+                  icon: <TrendingUp className="h-5 w-5 text-green-400" />,
+                  unit: sensorInfo.unit,
+                },
+                {
+                  label: "Minimum",
+                  value: stats.min,
+                  icon: (
+                    <TrendingUp className="h-5 w-5 text-red-400 rotate-180" />
+                  ),
+                  unit: sensorInfo.unit,
+                },
+                {
+                  label: "Rata-rata",
+                  value: stats.avg,
+                  icon: <TrendingUp className="h-5 w-5 text-blue-400" />,
+                  unit: sensorInfo.unit,
+                },
+                {
+                  label: "Total Data",
+                  value: chartData.length,
+                  icon: <Calendar className="h-5 w-5 text-cyan-400" />,
+                  unit: "data points",
+                },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className={`${sensorInfo.bgColor} border ${sensorInfo.borderColor} rounded-2xl p-5`}
+                >
+                  <div className="flex items-center space-x-2 mb-2">
+                    {item.icon}
+                    <p className="text-sm text-slate-400 font-medium">
+                      {item.label}
+                    </p>
+                  </div>
+                  <p className="text-3xl font-black text-white">{item.value}</p>
+                  <p className="text-xs text-slate-400 mt-1">{item.unit}</p>
                 </div>
-                <p className="text-3xl font-black text-white">{stats.max}</p>
-                <p className="text-xs text-slate-400 mt-1">{sensorInfo.unit}</p>
-              </div>
-
-              <div
-                className={`${sensorInfo.bgColor} border ${sensorInfo.borderColor} rounded-2xl p-5`}
-              >
-                <div className="flex items-center space-x-2 mb-2">
-                  <TrendingUp className="h-5 w-5 text-red-400 rotate-180" />
-                  <p className="text-sm text-slate-400 font-medium">Minimum</p>
-                </div>
-                <p className="text-3xl font-black text-white">{stats.min}</p>
-                <p className="text-xs text-slate-400 mt-1">{sensorInfo.unit}</p>
-              </div>
-
-              <div
-                className={`${sensorInfo.bgColor} border ${sensorInfo.borderColor} rounded-2xl p-5`}
-              >
-                <div className="flex items-center space-x-2 mb-2">
-                  <TrendingUp className="h-5 w-5 text-blue-400" />
-                  <p className="text-sm text-slate-400 font-medium">
-                    Rata-rata
-                  </p>
-                </div>
-                <p className="text-3xl font-black text-white">{stats.avg}</p>
-                <p className="text-xs text-slate-400 mt-1">{sensorInfo.unit}</p>
-              </div>
-
-              <div
-                className={`${sensorInfo.bgColor} border ${sensorInfo.borderColor} rounded-2xl p-5`}
-              >
-                <div className="flex items-center space-x-2 mb-2">
-                  <Calendar className="h-5 w-5 text-cyan-400" />
-                  <p className="text-sm text-slate-400 font-medium">
-                    Total Data
-                  </p>
-                </div>
-                <p className="text-3xl font-black text-white">
-                  {chartData.length}
-                </p>
-                <p className="text-xs text-slate-400 mt-1">data points</p>
-              </div>
+              ))}
             </div>
 
             {/* Chart Area */}
@@ -270,7 +302,6 @@ const SensorChartModal = ({
                 </span>
               </div>
 
-              {/* Simple Line Chart */}
               <div className="relative h-80 bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
                 {/* Y-axis labels */}
                 <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-slate-400 pr-2">
@@ -279,105 +310,101 @@ const SensorChartModal = ({
                   <span>{minValue.toFixed(0)}</span>
                 </div>
 
-                {/* Chart SVG */}
-                <svg
-                  className="w-full h-full pl-8"
-                  viewBox="0 0 800 300"
-                  preserveAspectRatio="none"
-                >
-                  {/* Grid lines */}
-                  <defs>
-                    <linearGradient
-                      id={`gradient-${sensorType}`}
-                      x1="0%"
-                      y1="0%"
-                      x2="0%"
-                      y2="100%"
-                    >
-                      <stop
-                        offset="0%"
-                        style={{
-                          stopColor: sensorInfo.lineColor,
-                          stopOpacity: 0.3,
-                        }}
-                      />
-                      <stop
-                        offset="100%"
-                        style={{
-                          stopColor: sensorInfo.lineColor,
-                          stopOpacity: 0,
-                        }}
-                      />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Horizontal grid */}
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <line
-                      key={i}
-                      x1="0"
-                      y1={i * 75}
-                      x2="800"
-                      y2={i * 75}
-                      stroke="rgba(148, 163, 184, 0.1)"
-                      strokeWidth="1"
-                    />
-                  ))}
-
-                  {/* Area under line */}
-                  <path
-                    d={`M 0 300 ${chartData
-                      .map((point, i) => {
-                        const x = (i / (chartData.length - 1)) * 800;
-                        const y =
-                          300 -
-                          ((point.value - minValue) / (maxValue - minValue)) *
-                            300;
-                        return `L ${x} ${y}`;
-                      })
-                      .join(" ")} L 800 300 Z`}
-                    fill={`url(#gradient-${sensorType})`}
-                  />
-
-                  {/* Line */}
-                  <path
-                    d={`M ${chartData
-                      .map((point, i) => {
-                        const x = (i / (chartData.length - 1)) * 800;
-                        const y =
-                          300 -
-                          ((point.value - minValue) / (maxValue - minValue)) *
-                            300;
-                        return `${x},${y}`;
-                      })
-                      .join(" L ")}`}
-                    fill="none"
-                    stroke={sensorInfo.lineColor}
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-
-                  {/* Data points */}
-                  {chartData.map((point, i) => {
-                    const x = (i / (chartData.length - 1)) * 800;
-                    const y =
-                      300 -
-                      ((point.value - minValue) / (maxValue - minValue)) * 300;
-                    return (
-                      <circle
-                        key={i}
-                        cx={x}
-                        cy={y}
-                        r="4"
-                        fill={sensorInfo.lineColor}
-                        className="hover:r-6 transition-all"
+                {/* SVG */}
+                {chartData.length > 1 ? (
+                  <svg
+                    className="w-full h-full pl-8"
+                    viewBox="0 0 800 300"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient
+                        id={`gradient-${sensorType}`}
+                        x1="0%"
+                        y1="0%"
+                        x2="0%"
+                        y2="100%"
                       >
-                        <title>{`${point.date}: ${point.value} ${sensorInfo.unit}`}</title>
-                      </circle>
-                    );
-                  })}
-                </svg>
+                        <stop
+                          offset="0%"
+                          style={{
+                            stopColor: sensorInfo.lineColor,
+                            stopOpacity: 0.3,
+                          }}
+                        />
+                        <stop
+                          offset="100%"
+                          style={{
+                            stopColor: sensorInfo.lineColor,
+                            stopOpacity: 0,
+                          }}
+                        />
+                      </linearGradient>
+                    </defs>
+
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <line
+                        key={i}
+                        x1="0"
+                        y1={i * 75}
+                        x2="800"
+                        y2={i * 75}
+                        stroke="rgba(148, 163, 184, 0.1)"
+                        strokeWidth="1"
+                      />
+                    ))}
+
+                    {/* ✅ Fixed area path */}
+                    <path
+                      d={`M 0 300 ${chartData
+                        .map((point, i) => {
+                          const x = (i / (chartData.length - 1)) * 800;
+                          const y = safeY(point.value);
+                          return `L ${x} ${y}`;
+                        })
+                        .join(" ")} L 800 300 Z`}
+                      fill={`url(#gradient-${sensorType})`}
+                    />
+
+                    {/* ✅ Fixed line path */}
+                    <path
+                      d={`M ${chartData
+                        .map((point, i) => {
+                          const x = (i / (chartData.length - 1)) * 800;
+                          const y = safeY(point.value);
+                          return `${x},${y}`;
+                        })
+                        .join(" L ")}`}
+                      fill="none"
+                      stroke={sensorInfo.lineColor}
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+
+                    {/* Points */}
+                    {chartData.map((point, i) => {
+                      const x = (i / (chartData.length - 1)) * 800;
+                      const y = safeY(point.value);
+                      return (
+                        <circle
+                          key={i}
+                          cx={x}
+                          cy={y}
+                          r="4"
+                          fill={sensorInfo.lineColor}
+                          className="hover:r-6 transition-all"
+                        >
+                          <title>{`${point.date}: ${point.value} ${sensorInfo.unit}`}</title>
+                        </circle>
+                      );
+                    })}
+                  </svg>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-slate-400">
+                    No data available
+                  </div>
+                )}
 
                 {/* X-axis labels */}
                 <div className="flex justify-between mt-2 text-xs text-slate-400 pl-8">

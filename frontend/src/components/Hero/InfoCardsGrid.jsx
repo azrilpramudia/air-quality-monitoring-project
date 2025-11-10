@@ -68,7 +68,7 @@ const InfoCardsGrid = ({ sensorData, onOpenChart }) => (
     />
     <EnhancedInfoCard
       icon={<TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 text-slate-300" />}
-      title="Dust"
+      title="Debu"
       value={`${sensorData.dust ?? "--"} µg/m³`}
       subtitle="Partikel debu"
       color="from-slate-500/20 to-slate-600/20"
