@@ -1,13 +1,14 @@
 // /* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, Activity, Info, TrendingUp } from "lucide-react";
+import { ArrowLeft, Activity, TrendingUp } from "lucide-react";
 import SensorChartModal from "../Modals/SensorChartModal.jsx";
 import { styles } from "../../styles/SensorDetail.Styles.js";
 import { useMQTT } from "../../hooks/useMQTT.js";
+import { sensorInfo } from "../../data/sensorInfo.js";
 
 const SensorDetail = ({ sensorType, onBack }) => {
-  const { data: mqttData, isConnected, activeBroker } = useMQTT();
+  const { data: mqttData, isConnected } = useMQTT();
   const [chartModal, setChartModal] = useState({
     isOpen: false,
     sensorType: null,
@@ -57,65 +58,6 @@ const SensorDetail = ({ sensorType, onBack }) => {
     });
   };
 
-  // ================= SENSOR INFO =================
-  const sensorInfo = {
-    SHT31: {
-      name: "SHT31",
-      fullName: "Sensirion SHT31 Digital Sensor",
-      color: "from-blue-500 to-blue-600",
-      description: `SHT31 adalah sensor digital berukuran kecil yang dirancang untuk mengukur suhu dan kelembapan udara secara akurat dalam satu chip.`,
-      specs: [
-        { label: "Range Suhu", value: "-40°C hingga +125°C" },
-        { label: "Akurasi Suhu", value: "±0,3°C (typical)" },
-        { label: "Akurasi Kelembapan", value: "±2% RH (typical)" },
-        { label: "Tegangan Kerja", value: "2,5 V - 5 V" },
-        { label: "Interface", value: "I²C (alamat 0x44/0x45)" },
-      ],
-      applications: [
-        "Pemantauan lingkungan",
-        "Smart home & IoT",
-        "HVAC system",
-        "Inkubator",
-      ],
-    },
-    GP2Y1010AU0F: {
-      name: "GP2Y1010AU0F",
-      fullName: "Sharp GP2Y1010AU0F Dust Sensor",
-      color: "from-purple-500 to-purple-600",
-      description:
-        "Sensor GP2Y1010AU0F mendeteksi konsentrasi partikel debu menggunakan sistem optik LED IR dan fototransistor.",
-      specs: [
-        { label: "Tegangan suplai", value: "5 V ±0,5 V" },
-        { label: "Sensitivitas", value: "0.5V per 0.1mg/m³" },
-        { label: "Arus konsumsi", value: "20 mA" },
-        { label: "Rentang suhu operasi", value: "-10 °C hingga +65 °C" },
-      ],
-      applications: ["Air Purifier", "Air Conditioner", "Air Quality Monitor"],
-    },
-    ENS160: {
-      name: "ENS160",
-      fullName: "ScioSense ENS160 Air Quality Sensor",
-      color: "from-green-500 to-teal-600",
-      description:
-        "ENS160 adalah sensor multi-gas digital yang mendeteksi TVOC, eCO₂, dan AQI secara real time.",
-      specs: [
-        { label: "Tegangan Catu Daya", value: "1,8 V (typical)" },
-        { label: "Interface", value: "I²C (alamat 0x52/0x53)" },
-        {
-          label: "Output",
-          value: "TVOC (0–65.000 ppb), eCO₂ (400–65.000 ppm), AQI (1–5)",
-        },
-        { label: "Konsumsi Arus", value: "±24 mA" },
-      ],
-      applications: [
-        "Air Purifier",
-        "Smart Home",
-        "IoT Monitoring",
-        "Deteksi Polusi",
-      ],
-    },
-  };
-
   const info = sensorInfo[sensorType];
   if (!info) {
     onBack?.();
@@ -130,7 +72,7 @@ const SensorDetail = ({ sensorType, onBack }) => {
       <style>{styles}</style>
 
       <div className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 min-h-screen text-slate-100 overflow-hidden">
-        {/* background */}
+        {/* Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
           <div
@@ -176,16 +118,6 @@ const SensorDetail = ({ sensorType, onBack }) => {
                 </span>
               </div>
             </div>
-
-            {/* Broker info */}
-            {activeBroker && (
-              <p className="text-xs mt-2 text-white/70">
-                Broker:{" "}
-                <span className="text-cyan-300">
-                  {new URL(activeBroker).hostname}
-                </span>
-              </p>
-            )}
           </div>
 
           {/* Current Data */}
@@ -203,7 +135,7 @@ const SensorDetail = ({ sensorType, onBack }) => {
               {sensorType === "SHT31" && (
                 <>
                   <DataCard
-                    label="Temperature"
+                    label="Suhu"
                     value={`${currentData.temperature ?? "--"}°C`}
                     icon="🌡️"
                     color="cyan"
@@ -217,7 +149,7 @@ const SensorDetail = ({ sensorType, onBack }) => {
                     }
                   />
                   <DataCard
-                    label="Humidity"
+                    label="Kelembapan"
                     value={`${currentData.humidity ?? "--"}%`}
                     icon="💧"
                     color="blue"
@@ -234,7 +166,7 @@ const SensorDetail = ({ sensorType, onBack }) => {
               )}
               {sensorType === "GP2Y1010AU0F" && (
                 <DataCard
-                  label="Dust Concentration"
+                  label="Konsentrasi Debu"
                   value={`${currentData.dust ?? "--"} µg/m³`}
                   icon="💨"
                   color="purple"
@@ -280,6 +212,58 @@ const SensorDetail = ({ sensorType, onBack }) => {
                   />
                 </>
               )}
+            </div>
+          </section>
+
+          {/* Sensor Description Section */}
+          <section className="bg-slate-900/40 backdrop-blur-2xl rounded-3xl p-6 md:p-10 mb-10 border border-slate-700/60 shadow-[0_0_30px_-5px_rgba(0,255,255,0.15)] transition-all duration-300 hover:shadow-[0_0_40px_-5px_rgba(0,255,255,0.25)]">
+            {/* Title */}
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 tracking-tight">
+              Tentang Sensor
+            </h2>
+
+            {/* Description */}
+            <p className="text-slate-300 leading-relaxed mb-10 text-justify">
+              {info.description}
+            </p>
+
+            {/* Grid Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              {/* Spesifikasi Teknis */}
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 shadow-inner hover:border-cyan-500/50 transition-all duration-300">
+                <h3 className="text-2xl font-semibold text-cyan-400 mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+                  Spesifikasi Teknis
+                </h3>
+                <ul className="space-y-3">
+                  {info.specs.map((spec, index) => (
+                    <li
+                      key={index}
+                      className="flex justify-between text-slate-300 border-b border-slate-700/50 pb-2 text-sm md:text-base"
+                    >
+                      <span className="font-medium text-slate-200">
+                        {spec.label}
+                      </span>
+                      <span className="text-slate-100 font-light">
+                        {spec.value}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Aplikasi Umum */}
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 shadow-inner hover:border-emerald-500/50 transition-all duration-300">
+                <h3 className="text-2xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                  Aplikasi Umum
+                </h3>
+                <ul className="list-disc list-inside space-y-2 text-slate-300 text-sm md:text-base leading-relaxed">
+                  {info.applications.map((app, index) => (
+                    <li key={index}>{app}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </section>
         </div>
