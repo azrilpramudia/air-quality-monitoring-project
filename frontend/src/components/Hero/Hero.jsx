@@ -2,9 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Toaster, toast } from "react-hot-toast";
-
-// ====== Hooks ======
-import { useMQTT } from "../../hooks/useMQTT.js";
+import { useMQTTContext } from "../../context/MQTTContext.jsx";
 
 // ====== Components ======
 import AQICircleDisplay from "./AQICircleDisplay.jsx";
@@ -35,7 +33,9 @@ const THRESHOLDS = {
 const AIR_ALERT_ID = "air-alert";
 
 const Hero = () => {
-  const { data: sensorData, isConnected } = useMQTT();
+  // 🔄 Get live data & connection state from context
+  const { data: sensorData, connected: isConnected } = useMQTTContext();
+
   const [currentView, setCurrentView] = useState("dashboard");
   const [selectedSensor, setSelectedSensor] = useState(null);
   const [showAQIModal, setShowAQIModal] = useState(false);
@@ -230,7 +230,7 @@ const Hero = () => {
       color: null,
     });
 
-  const aqiInfo = getAQIInfo(sensorData.aqi);
+  const aqiInfo = getAQIInfo(sensorData?.aqi || 0);
 
   // === Detail View ===
   if (currentView === "detail" && selectedSensor) {

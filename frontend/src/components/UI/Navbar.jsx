@@ -1,7 +1,8 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { Wind, Droplets, Gauge, Activity } from "lucide-react";
-import { useMQTT } from "../../hooks/useMQTT";
+import { useMQTTContext } from "../../context/MQTTContext";
 
 const Navbar = () => {
   const [activeTime, setActiveTime] = useState(
@@ -15,21 +16,18 @@ const Navbar = () => {
   const [progress, setProgress] = useState(0);
   const [wasConnected, setWasConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
-  const { isConnected } = useMQTT();
+  const { isConnected, activeBroker } = useMQTTContext();
 
-  // Detection Reconnecting
+  // 🟡 Deteksi reconnecting
   useEffect(() => {
-    if (wasConnected && !isConnected) {
-      setIsReconnecting(true);
-    } else if (isConnected) {
-      setIsReconnecting(false);
-    }
+    if (wasConnected && !isConnected) setIsReconnecting(true);
+    else if (isConnected) setIsReconnecting(false);
     setWasConnected(isConnected);
   }, [isConnected]);
 
-  // Updated active time every second
+  // 🕒 Update waktu tiap detik
   useEffect(() => {
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       setActiveTime(
         new Date().toLocaleTimeString("id-ID", {
           hour: "2-digit",
@@ -38,10 +36,10 @@ const Navbar = () => {
         })
       );
     }, 1000);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, []);
 
-  // Scroll progress
+  // 📜 Scroll progress bar
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY || document.documentElement.scrollTop;
@@ -56,7 +54,7 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Navigate to top
+  // 🔝 Scroll to top
   const goTop = () => {
     if (window.location.hash !== "#top") window.location.hash = "#top";
     document
@@ -64,6 +62,7 @@ const Navbar = () => {
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  // 🔍 Buka detail sensor
   const openSensorDetail = (key) => {
     window.location.hash = `#${key}`;
     document

@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import mqtt from "mqtt";
 
 const MQTT_BROKER = import.meta.env.VITE_MQTT_URL || "wss://broker.emqx.io:8084/mqtt";
@@ -8,20 +7,19 @@ const DEBUG = import.meta.env.VITE_MQTT_DEBUG === "true";
 
 let client;
 
-/**
- * 🔌 Connect to MQTT Broker
- */
 export const connectMQTT = (onMessage, onConnectionChange, onBrokerChange) => {
   const clientId = CLIENT_PREFIX + Math.random().toString(16).substring(2, 8);
+  onBrokerChange?.(MQTT_BROKER);
 
   DEBUG && console.log(`🔌 Connecting to ${MQTT_BROKER} as ${clientId}`);
-  onBrokerChange?.(MQTT_BROKER);
 
   client = mqtt.connect(MQTT_BROKER, {
     clientId,
-    reconnectPeriod: 4000, // Reconnect every 4 seconds
-    connectTimeout: 5000,
+    reconnectPeriod: 5000,
+    connectTimeout: 10000,
+    keepalive: 60,
     clean: true,
+    protocolVersion: 4,
   });
 
   client.on("connect", () => {
@@ -39,21 +37,20 @@ export const connectMQTT = (onMessage, onConnectionChange, onBrokerChange) => {
         const data = JSON.parse(message.toString());
         onMessage?.(data);
         DEBUG && console.log("📊 Incoming data:", data);
-      } catch (err) {
+      } catch {
         console.warn("⚠️ Invalid JSON:", message.toString());
       }
     }
   });
 
-  client.on("close", () => {
-    console.warn("⚠️ Disconnected from broker:", MQTT_BROKER);
-    onConnectionChange?.(false);
-  });
-
+  client.on("reconnect", () => console.warn("♻️ Reconnecting..."));
+  client.on("offline", () => console.warn("📴 Offline"));
+  client.on("end", () => console.warn("🔚 Connection ended"));
+  client.on("close", () => console.warn("⚠️ Disconnected from broker:", MQTT_BROKER));
   client.on("error", (err) => {
     console.error("🚨 MQTT Error:", err.message);
     onConnectionChange?.(false);
   });
 
-  return client;
+  return { client, clientId, broker: MQTT_BROKER };
 };

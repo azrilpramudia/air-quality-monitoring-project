@@ -13,31 +13,36 @@ export const useMQTT = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [activeBroker, setActiveBroker] = useState(null);
   const [clientId, setClientId] = useState(null);
+  const [log, setLog] = useState([]);
 
   useEffect(() => {
-    // Take prefix from .env
-    const prefix = import.meta.env.VITE_MQTT_CLIENT_PREFIX || "react_client_";
-    const clientId = `${prefix}${Math.random().toString(16).substring(2, 8)}`;
-    setClientId(clientId);
+    const pushLog = (msg) => {
+      setLog((prev) => [
+        ...prev.slice(-15),
+        { time: new Date().toLocaleTimeString("id-ID"), message: msg },
+      ]);
+    };
 
-    console.log("🟢 MQTT connecting...");
-    console.log(`📦 Using Client ID: ${clientId}`);
-    console.log(`🌍 Broker: ${import.meta.env.VITE_MQTT_URL}`);
-
-    connectMQTT(
-      (incomingData) => setData(incomingData),
-      (connected, brokerUrl) => {
+    const { client, clientId, broker } = connectMQTT(
+      (incomingData) => {
+        setData(incomingData);
+      },
+      (connected) => {
         setIsConnected(connected);
-        if (connected) {
-          setActiveBroker(brokerUrl);
-          console.log(`✅ Connected to MQTT Broker: ${brokerUrl}`);
-          console.log(`🔗 Client ID: ${clientId}`);
-        } else {
-          console.warn("⚠️ MQTT disconnected or reconnecting...");
-        }
-      }
+        pushLog(connected ? "✅ Connected" : "⚠️ Disconnected / Reconnecting...");
+      },
+      (brokerUrl) => setActiveBroker(brokerUrl)
     );
+
+    setClientId(clientId);
+    setActiveBroker(broker);
+    pushLog(`🔌 Connecting to ${broker} as ${clientId}`);
+
+    return () => {
+      client?.end();
+      pushLog("🛑 MQTT connection closed");
+    };
   }, []);
 
-  return { data, isConnected, activeBroker, clientId };
+  return { data, isConnected, activeBroker, clientId, log };
 };
