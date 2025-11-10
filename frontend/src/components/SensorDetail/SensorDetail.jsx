@@ -1,11 +1,13 @@
+/* eslint-disable no-unused-vars */
 // /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, Activity, TrendingUp } from "lucide-react";
 import SensorChartModal from "../Modals/SensorChartModal.jsx";
 import { styles } from "../../styles/SensorDetail.Styles.js";
 import { useMQTT } from "../../hooks/useMQTT.js";
 import { sensorInfo } from "../../data/sensorInfo.js";
+import { motion } from "framer-motion";
 
 const SensorDetail = ({ sensorType, onBack }) => {
   const { data: mqttData, isConnected } = useMQTT();
@@ -216,21 +218,57 @@ const SensorDetail = ({ sensorType, onBack }) => {
           </section>
 
           {/* Sensor Description Section */}
-          <section className="bg-slate-900/40 backdrop-blur-2xl rounded-3xl p-6 md:p-10 mb-10 border border-slate-700/60 shadow-[0_0_30px_-5px_rgba(0,255,255,0.15)] transition-all duration-300 hover:shadow-[0_0_40px_-5px_rgba(0,255,255,0.25)]">
+          <motion.section
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            viewport={{ once: true }}
+            className="bg-slate-900/40 backdrop-blur-2xl rounded-3xl p-6 md:p-10 mb-10 border border-slate-700/60 shadow-[0_0_30px_-5px_rgba(0,255,255,0.15)] transition-all duration-300 hover:shadow-[0_0_40px_-5px_rgba(0,255,255,0.25)]"
+          >
             {/* Title */}
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 tracking-tight">
+            <motion.h2
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              viewport={{ once: true }}
+              className="text-3xl md:text-4xl font-bold text-white mb-6 tracking-tight relative inline-block"
+            >
               Tentang Sensor
-            </h2>
+              {/* Glowing Line Under Title */}
+              <motion.span
+                initial={{ width: 0 }}
+                whileInView={{ width: "100%" }}
+                transition={{ delay: 0.4, duration: 0.8 }}
+                viewport={{ once: true }}
+                className="absolute -bottom-2 left-0 h-[3px] bg-gradient-to-r from-cyan-400 via-emerald-400 to-transparent rounded-full"
+              ></motion.span>
+            </motion.h2>
 
             {/* Description */}
-            <p className="text-slate-300 leading-relaxed mb-10 text-justify">
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.8 }}
+              viewport={{ once: true }}
+              className="text-slate-300 leading-relaxed mb-10 text-justify"
+            >
               {info.description}
-            </p>
+            </motion.p>
 
             {/* Grid Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-              {/* Spesifikasi Teknis */}
-              <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 shadow-inner hover:border-cyan-500/50 transition-all duration-300">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.8 }}
+              viewport={{ once: true }}
+              className="grid grid-cols-1 lg:grid-cols-2 gap-10"
+            >
+              {/* Specification Technical */}
+              <motion.div
+                whileHover={{ scale: 1.02, borderColor: "#06b6d4" }}
+                transition={{ duration: 0.3 }}
+                className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 shadow-inner transition-all duration-300"
+              >
                 <h3 className="text-2xl font-semibold text-cyan-400 mb-4 flex items-center gap-2">
                   <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
                   Spesifikasi Teknis
@@ -250,10 +288,14 @@ const SensorDetail = ({ sensorType, onBack }) => {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </motion.div>
 
-              {/* Aplikasi Umum */}
-              <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 shadow-inner hover:border-emerald-500/50 transition-all duration-300">
+              {/* Common Application */}
+              <motion.div
+                whileHover={{ scale: 1.02, borderColor: "#10b981" }}
+                transition={{ duration: 0.3 }}
+                className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 shadow-inner transition-all duration-300"
+              >
                 <h3 className="text-2xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
                   <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
                   Aplikasi Umum
@@ -263,9 +305,9 @@ const SensorDetail = ({ sensorType, onBack }) => {
                     <li key={index}>{app}</li>
                   ))}
                 </ul>
-              </div>
-            </div>
-          </section>
+              </motion.div>
+            </motion.div>
+          </motion.section>
         </div>
       </div>
 

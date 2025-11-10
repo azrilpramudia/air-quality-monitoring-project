@@ -31,7 +31,7 @@ const Footer = () => {
                 <TrendingUp className="h-5 w-5 text-cyan-400" />
               </div>
               <h3 className="text-xl font-bold text-white tracking-tight">
-                AirSense
+                Air Quality Monitor
               </h3>
             </div>
 
