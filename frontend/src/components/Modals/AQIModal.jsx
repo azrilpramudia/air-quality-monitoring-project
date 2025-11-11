@@ -56,17 +56,14 @@ const AQIModal = ({ isOpen, onClose, level, aqiInfo }) => {
 
                     {/* Text Section */}
                     <div className="text-center md:text-left">
-                      <div className="flex flex-wrap justify-center md:justify-start items-center space-x-2 sm:space-x-3 mb-2">
-                        <span className="text-4xl sm:text-5xl font-black text-white">
-                          {/* {level} */}
-                        </span>
-                        <h2 className="text-2xl sm:text-3xl font-bold text-white">
+                      <div className="flex flex-col items-center md:items-start">
+                        <h2 className="text-3xl sm:text-4xl font-black text-white">
                           {aqiInfo.label}
                         </h2>
+                        <p className="text-white/90 text-sm sm:text-base font-medium leading-relaxed max-w-md mx-auto md:mx-0">
+                          {detailInfo.description}
+                        </p>
                       </div>
-                      <p className="text-white/90 text-sm sm:text-base font-medium leading-relaxed max-w-md mx-auto md:mx-0">
-                        {detailInfo.description}
-                      </p>
                     </div>
                   </div>
                 </div>
