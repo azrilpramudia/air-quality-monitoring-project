@@ -182,34 +182,35 @@ const SensorChartModal = ({
         onClick={onClose}
       >
         <div
-          className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-slate-900/95 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl animate-modal-in"
+          className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-slate-900/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-700/50 shadow-2xl animate-modal-in"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Close Button */}
           <button
             onClick={onClose}
-            className="sticky top-4 right-4 float-right z-10 p-2 bg-slate-800/80 hover:bg-slate-700 rounded-full transition-colors"
+            className="sticky top-3 right-3 float-right z-10 p-2 bg-slate-800/80 hover:bg-slate-700 rounded-full transition-colors"
           >
-            <X className="h-6 w-6 text-white" />
+            <X className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </button>
 
           <div className="p-4 sm:p-6 md:p-8">
             {/* Header */}
             <div
-              className={`bg-gradient-to-r ${sensorInfo.color} rounded-2xl p-4 sm:p-6 mb-6`}
+              className={`bg-gradient-to-r ${sensorInfo.color} rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-6`}
             >
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center space-x-3 sm:space-x-4">
                   <div className="text-4xl sm:text-5xl">{icon}</div>
                   <div>
                     <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">
                       {sensorInfo.title}
                     </h2>
-                    <p className="text-white/90 text-base sm:text-lg">
+                    <p className="text-white/90 text-sm sm:text-lg">
                       Data Historis & Analisis
                     </p>
                   </div>
                 </div>
-                <div className="text-left sm:text-right w-full sm:w-auto">
+                <div className="text-left sm:text-right">
                   <p className="text-white/80 text-xs sm:text-sm mb-1">
                     Nilai Saat Ini
                   </p>
@@ -221,7 +222,7 @@ const SensorChartModal = ({
             </div>
 
             {/* Time Range Selector */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
               <div className="flex flex-wrap gap-2">
                 {[
                   { value: "24h", label: "24 Jam" },
@@ -231,7 +232,7 @@ const SensorChartModal = ({
                   <button
                     key={range.value}
                     onClick={() => setTimeRange(range.value)}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm sm:text-base ${
+                    className={`px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm sm:text-base transition-all ${
                       timeRange === range.value
                         ? `bg-gradient-to-r ${sensorInfo.color} text-white shadow-lg`
                         : "bg-slate-800/50 text-slate-300 hover:bg-slate-800"
@@ -241,14 +242,16 @@ const SensorChartModal = ({
                   </button>
                 ))}
               </div>
-              <button className="flex items-center justify-center space-x-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors text-sm sm:text-base">
+              <button className="flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 bg-slate-800/50 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors">
                 <Download className="h-4 w-4" />
-                <span className="font-semibold">Export Data</span>
+                <span className="text-xs sm:text-sm font-semibold">
+                  Export Data
+                </span>
               </button>
             </div>
 
             {/* Statistics Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {[
                 {
                   label: "Maksimum",
@@ -290,16 +293,14 @@ const SensorChartModal = ({
                   <p className="text-2xl sm:text-3xl font-black text-white">
                     {item.value}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-slate-400 mt-1">
-                    {item.unit}
-                  </p>
+                  <p className="text-xs text-slate-400 mt-1">{item.unit}</p>
                 </div>
               ))}
             </div>
 
             {/* Chart Area */}
             <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl p-4 sm:p-6 border border-slate-700/50">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
                 <h3 className="text-lg sm:text-xl font-bold text-white">
                   Grafik Tren Data
                 </h3>
@@ -308,10 +309,18 @@ const SensorChartModal = ({
                 </span>
               </div>
 
-              <div className="relative h-64 sm:h-80 bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 overflow-x-auto">
+              <div className="relative h-64 sm:h-80 bg-slate-800/30 rounded-xl p-3 sm:p-4 border border-slate-700/50">
+                {/* Y-axis labels */}
+                <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-[10px] sm:text-xs text-slate-400 pr-2">
+                  <span>{maxValue.toFixed(0)}</span>
+                  <span>{((maxValue + minValue) / 2).toFixed(0)}</span>
+                  <span>{minValue.toFixed(0)}</span>
+                </div>
+
+                {/* SVG Chart */}
                 {chartData.length > 1 ? (
                   <svg
-                    className="w-[800px] sm:w-full h-full pl-8"
+                    className="w-full h-full pl-6 sm:pl-8"
                     viewBox="0 0 800 300"
                     preserveAspectRatio="none"
                   >
@@ -352,6 +361,7 @@ const SensorChartModal = ({
                       />
                     ))}
 
+                    {/* Filled Area */}
                     <path
                       d={`M 0 300 ${chartData
                         .map((point, i) => {
@@ -363,6 +373,7 @@ const SensorChartModal = ({
                       fill={`url(#gradient-${sensorType})`}
                     />
 
+                    {/* Line */}
                     <path
                       d={`M ${chartData
                         .map((point, i) => {
@@ -378,6 +389,7 @@ const SensorChartModal = ({
                       strokeLinejoin="round"
                     />
 
+                    {/* Points */}
                     {chartData.map((point, i) => {
                       const x = (i / (chartData.length - 1)) * 800;
                       const y = safeY(point.value);
@@ -386,9 +398,9 @@ const SensorChartModal = ({
                           key={i}
                           cx={x}
                           cy={y}
-                          r="4"
+                          r="3.5"
                           fill={sensorInfo.lineColor}
-                          className="hover:r-6 transition-all"
+                          className="hover:r-5 transition-all"
                         >
                           <title>{`${point.date}: ${point.value} ${sensorInfo.unit}`}</title>
                         </circle>
@@ -396,10 +408,19 @@ const SensorChartModal = ({
                     })}
                   </svg>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+                  <div className="flex items-center justify-center h-full text-slate-400 text-xs sm:text-sm">
                     No data available
                   </div>
                 )}
+
+                {/* X-axis labels */}
+                <div className="flex justify-between mt-2 text-[10px] sm:text-xs text-slate-400 pl-6 sm:pl-8">
+                  {chartData
+                    .filter((_, i) => i % Math.ceil(chartData.length / 6) === 0)
+                    .map((point, i) => (
+                      <span key={i}>{point.date}</span>
+                    ))}
+                </div>
               </div>
             </div>
 
@@ -412,16 +433,16 @@ const SensorChartModal = ({
                 <table className="w-full text-xs sm:text-sm">
                   <thead>
                     <tr className="border-b border-slate-700">
-                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-slate-400 font-semibold">
+                      <th className="text-left py-2 sm:py-3 px-3 sm:px-4 text-slate-400 font-semibold">
                         Tanggal
                       </th>
-                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-slate-400 font-semibold">
+                      <th className="text-left py-2 sm:py-3 px-3 sm:px-4 text-slate-400 font-semibold">
                         Waktu
                       </th>
-                      <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-slate-400 font-semibold">
+                      <th className="text-right py-2 sm:py-3 px-3 sm:px-4 text-slate-400 font-semibold">
                         Nilai ({sensorInfo.unit})
                       </th>
-                      <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-slate-400 font-semibold">
+                      <th className="text-right py-2 sm:py-3 px-3 sm:px-4 text-slate-400 font-semibold">
                         Status
                       </th>
                     </tr>
@@ -436,16 +457,16 @@ const SensorChartModal = ({
                           key={i}
                           className="border-b border-slate-800 hover:bg-slate-800/50 transition-colors"
                         >
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-slate-300">
+                          <td className="py-2 sm:py-3 px-3 sm:px-4 text-slate-300">
                             {point.date}
                           </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-slate-300">
+                          <td className="py-2 sm:py-3 px-3 sm:px-4 text-slate-300">
                             {point.time}
                           </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-right font-bold text-white">
+                          <td className="py-2 sm:py-3 px-3 sm:px-4 text-right font-bold text-white">
                             {point.value}
                           </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-right">
+                          <td className="py-2 sm:py-3 px-3 sm:px-4 text-right">
                             <span
                               className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-semibold ${
                                 point.value > stats.avg * 1.1
