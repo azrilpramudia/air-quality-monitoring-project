@@ -273,16 +273,17 @@ const SensorDetail = ({ sensorType, onBack }) => {
                   <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
                   Spesifikasi Teknis
                 </h3>
+
                 <ul className="space-y-3">
                   {info.specs.map((spec, index) => (
                     <li
                       key={index}
-                      className="flex justify-between text-slate-300 border-b border-slate-700/50 pb-2 text-sm md:text-base"
+                      className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-slate-300 border-b border-slate-700/50 pb-2 text-sm md:text-base"
                     >
-                      <span className="font-medium text-slate-200">
+                      <span className="font-medium text-slate-200 mb-1 sm:mb-0 text-center sm:text-left">
                         {spec.label}
                       </span>
-                      <span className="text-slate-100 font-light">
+                      <span className="text-slate-100 font-light text-center sm:text-right break-words">
                         {spec.value}
                       </span>
                     </li>
