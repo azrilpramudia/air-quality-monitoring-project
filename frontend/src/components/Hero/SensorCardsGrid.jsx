@@ -43,7 +43,7 @@ const SensorCardsGrid = ({ sensorData, handleSensorClick }) => {
       icon: "🌿",
       data: [
         {
-          label: "VOC",
+          label: "TVOC",
           value: `${sensorData.tvoc ?? "--"} ppb`,
           icon: "🌿",
         },
