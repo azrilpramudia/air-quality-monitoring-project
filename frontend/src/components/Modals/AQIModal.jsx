@@ -58,7 +58,7 @@ const AQIModal = ({ isOpen, onClose, level, aqiInfo }) => {
                     <div className="text-center md:text-left">
                       <div className="flex flex-wrap justify-center md:justify-start items-center space-x-2 sm:space-x-3 mb-2">
                         <span className="text-4xl sm:text-5xl font-black text-white">
-                          {level}
+                          {/* {level} */}
                         </span>
                         <h2 className="text-2xl sm:text-3xl font-bold text-white">
                           {aqiInfo.label}

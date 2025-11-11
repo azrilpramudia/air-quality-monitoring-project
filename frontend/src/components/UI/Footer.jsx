@@ -131,9 +131,9 @@ const Footer = () => {
         <div className="mx-auto my-6 h-px w-[85%] max-w-5xl bg-gradient-to-r from-transparent via-slate-700/70 to-transparent" />
 
         {/* Bottom Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          {/* GitHub moved to the left, right before © */}
-          <div className="flex items-center gap-3 text-sm text-slate-400">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6 w-full">
+          {/* Mobile layout */}
+          <div className="flex w-full justify-between items-center md:hidden px-4">
             <a
               href="https://github.com/azrilpramudia/air-quality-monitoring-project"
               target="_blank"
@@ -144,19 +144,42 @@ const Footer = () => {
               <Github className="h-4 w-4 text-slate-400 group-hover:text-cyan-400" />
             </a>
 
-            <span>© {currentYear} AirSense.</span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
+            <div className="flex flex-col items-end text-right text-xs text-slate-400">
+              <span>© {currentYear} Air Quality Monitor.</span>
+              <span className="flex items-center gap-1 justify-end">
+                Dibuat dengan{" "}
+                <Heart className="h-3.5 w-3.5 text-red-500 animate-pulse" /> di
+                Bandung
+              </span>
+            </div>
+          </div>
+
+          {/* Desktop layout */}
+          <div className="hidden md:flex justify-between items-center w-full text-sm text-slate-400">
+            {/* Left side */}
+            <div className="flex items-center gap-3">
+              <a
+                href="https://github.com/azrilpramudia/air-quality-monitoring-project"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 hover:border-cyan-500/40 transition-all group"
+                aria-label="Buka repositori GitHub AirSense"
+              >
+                <Github className="h-4 w-4 text-slate-400 group-hover:text-cyan-400" />
+              </a>
+              <span>© {currentYear} Air Quality Monitor.</span>
+            </div>
+
+            {/* Right side */}
+            <div className="flex items-center gap-1 justify-end">
               Dibuat dengan{" "}
               <Heart className="h-3.5 w-3.5 text-red-500 animate-pulse" /> di
               Bandung
-            </span>
+            </div>
           </div>
-
-          {/* (Privacy/Terms/FAQ link removed) */}
         </div>
 
-        {/* Status Badge */}
+        {/* Status Badge (centered on all devices) */}
         <div className="mt-6 mb-0 pb-0 flex justify-center">
           <div className="inline-flex items-center gap-2 bg-slate-900/60 border border-slate-800 rounded-full px-4 py-2">
             <span className="relative flex h-2 w-2">
@@ -168,10 +191,10 @@ const Footer = () => {
             </span>
           </div>
         </div>
-      </div>
 
-      {/* Underline */}
-      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-slate-800/70 to-transparent pointer-events-none" />
+        {/* Underline (kept as-is) */}
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-slate-800/70 to-transparent pointer-events-none" />
+      </div>
     </footer>
   );
 };
