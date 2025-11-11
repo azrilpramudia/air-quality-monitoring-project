@@ -178,7 +178,7 @@ const SensorChartModal = ({
     <>
       <style>{styles}</style>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       >
         <div
@@ -192,26 +192,28 @@ const SensorChartModal = ({
             <X className="h-6 w-6 text-white" />
           </button>
 
-          <div className="p-6 md:p-8">
+          <div className="p-4 sm:p-6 md:p-8">
             {/* Header */}
             <div
-              className={`bg-gradient-to-r ${sensorInfo.color} rounded-2xl p-6 mb-6`}
+              className={`bg-gradient-to-r ${sensorInfo.color} rounded-2xl p-4 sm:p-6 mb-6`}
             >
-              <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center space-x-4">
-                  <div className="text-5xl">{icon}</div>
+                  <div className="text-4xl sm:text-5xl">{icon}</div>
                   <div>
-                    <h2 className="text-3xl font-bold text-white mb-1">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">
                       {sensorInfo.title}
                     </h2>
-                    <p className="text-white/90 text-lg">
+                    <p className="text-white/90 text-base sm:text-lg">
                       Data Historis & Analisis
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-white/80 text-sm mb-1">Nilai Saat Ini</p>
-                  <p className="text-4xl font-black text-white">
+                <div className="text-left sm:text-right w-full sm:w-auto">
+                  <p className="text-white/80 text-xs sm:text-sm mb-1">
+                    Nilai Saat Ini
+                  </p>
+                  <p className="text-3xl sm:text-4xl font-black text-white">
                     {currentValue}
                   </p>
                 </div>
@@ -219,8 +221,8 @@ const SensorChartModal = ({
             </div>
 
             {/* Time Range Selector */}
-            <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-              <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+              <div className="flex flex-wrap gap-2">
                 {[
                   { value: "24h", label: "24 Jam" },
                   { value: "7d", label: "7 Hari" },
@@ -229,7 +231,7 @@ const SensorChartModal = ({
                   <button
                     key={range.value}
                     onClick={() => setTimeRange(range.value)}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm sm:text-base ${
                       timeRange === range.value
                         ? `bg-gradient-to-r ${sensorInfo.color} text-white shadow-lg`
                         : "bg-slate-800/50 text-slate-300 hover:bg-slate-800"
@@ -239,14 +241,14 @@ const SensorChartModal = ({
                   </button>
                 ))}
               </div>
-              <button className="flex items-center space-x-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors">
+              <button className="flex items-center justify-center space-x-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors text-sm sm:text-base">
                 <Download className="h-4 w-4" />
-                <span className="text-sm font-semibold">Export Data</span>
+                <span className="font-semibold">Export Data</span>
               </button>
             </div>
 
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
               {[
                 {
                   label: "Maksimum",
@@ -277,43 +279,39 @@ const SensorChartModal = ({
               ].map((item, i) => (
                 <div
                   key={i}
-                  className={`${sensorInfo.bgColor} border ${sensorInfo.borderColor} rounded-2xl p-5`}
+                  className={`${sensorInfo.bgColor} border ${sensorInfo.borderColor} rounded-2xl p-4 sm:p-5`}
                 >
                   <div className="flex items-center space-x-2 mb-2">
                     {item.icon}
-                    <p className="text-sm text-slate-400 font-medium">
+                    <p className="text-xs sm:text-sm text-slate-400 font-medium">
                       {item.label}
                     </p>
                   </div>
-                  <p className="text-3xl font-black text-white">{item.value}</p>
-                  <p className="text-xs text-slate-400 mt-1">{item.unit}</p>
+                  <p className="text-2xl sm:text-3xl font-black text-white">
+                    {item.value}
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-slate-400 mt-1">
+                    {item.unit}
+                  </p>
                 </div>
               ))}
             </div>
 
             {/* Chart Area */}
-            <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl p-4 sm:p-6 border border-slate-700/50">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-white">
+                <h3 className="text-lg sm:text-xl font-bold text-white">
                   Grafik Tren Data
                 </h3>
-                <span className="text-sm text-slate-400">
+                <span className="text-xs sm:text-sm text-slate-400">
                   {timeRange === "24h" ? "Per Jam" : "Per Hari"}
                 </span>
               </div>
 
-              <div className="relative h-80 bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
-                {/* Y-axis labels */}
-                <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-slate-400 pr-2">
-                  <span>{maxValue.toFixed(0)}</span>
-                  <span>{((maxValue + minValue) / 2).toFixed(0)}</span>
-                  <span>{minValue.toFixed(0)}</span>
-                </div>
-
-                {/* SVG */}
+              <div className="relative h-64 sm:h-80 bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 overflow-x-auto">
                 {chartData.length > 1 ? (
                   <svg
-                    className="w-full h-full pl-8"
+                    className="w-[800px] sm:w-full h-full pl-8"
                     viewBox="0 0 800 300"
                     preserveAspectRatio="none"
                   >
@@ -354,7 +352,6 @@ const SensorChartModal = ({
                       />
                     ))}
 
-                    {/* ✅ Fixed area path */}
                     <path
                       d={`M 0 300 ${chartData
                         .map((point, i) => {
@@ -366,7 +363,6 @@ const SensorChartModal = ({
                       fill={`url(#gradient-${sensorType})`}
                     />
 
-                    {/* ✅ Fixed line path */}
                     <path
                       d={`M ${chartData
                         .map((point, i) => {
@@ -382,7 +378,6 @@ const SensorChartModal = ({
                       strokeLinejoin="round"
                     />
 
-                    {/* Points */}
                     {chartData.map((point, i) => {
                       const x = (i / (chartData.length - 1)) * 800;
                       const y = safeY(point.value);
@@ -401,41 +396,32 @@ const SensorChartModal = ({
                     })}
                   </svg>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-slate-400">
+                  <div className="flex items-center justify-center h-full text-slate-400 text-sm">
                     No data available
                   </div>
                 )}
-
-                {/* X-axis labels */}
-                <div className="flex justify-between mt-2 text-xs text-slate-400 pl-8">
-                  {chartData
-                    .filter((_, i) => i % Math.ceil(chartData.length / 6) === 0)
-                    .map((point, i) => (
-                      <span key={i}>{point.date}</span>
-                    ))}
-                </div>
               </div>
             </div>
 
             {/* Data Table */}
-            <div className="mt-6 bg-slate-900/60 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50">
-              <h3 className="text-xl font-bold text-white mb-4">
+            <div className="mt-6 bg-slate-900/60 backdrop-blur-xl rounded-2xl p-4 sm:p-6 border border-slate-700/50">
+              <h3 className="text-lg sm:text-xl font-bold text-white mb-4">
                 Tabel Data Detail
               </h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs sm:text-sm">
                   <thead>
                     <tr className="border-b border-slate-700">
-                      <th className="text-left py-3 px-4 text-slate-400 font-semibold">
+                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-slate-400 font-semibold">
                         Tanggal
                       </th>
-                      <th className="text-left py-3 px-4 text-slate-400 font-semibold">
+                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-slate-400 font-semibold">
                         Waktu
                       </th>
-                      <th className="text-right py-3 px-4 text-slate-400 font-semibold">
+                      <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-slate-400 font-semibold">
                         Nilai ({sensorInfo.unit})
                       </th>
-                      <th className="text-right py-3 px-4 text-slate-400 font-semibold">
+                      <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-slate-400 font-semibold">
                         Status
                       </th>
                     </tr>
@@ -450,18 +436,18 @@ const SensorChartModal = ({
                           key={i}
                           className="border-b border-slate-800 hover:bg-slate-800/50 transition-colors"
                         >
-                          <td className="py-3 px-4 text-slate-300">
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-slate-300">
                             {point.date}
                           </td>
-                          <td className="py-3 px-4 text-slate-300">
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-slate-300">
                             {point.time}
                           </td>
-                          <td className="py-3 px-4 text-right font-bold text-white">
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-right font-bold text-white">
                             {point.value}
                           </td>
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-right">
                             <span
-                              className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                              className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-semibold ${
                                 point.value > stats.avg * 1.1
                                   ? "bg-red-500/20 text-red-400"
                                   : point.value < stats.avg * 0.9
@@ -482,7 +468,7 @@ const SensorChartModal = ({
                 </table>
               </div>
               {chartData.length > 10 && (
-                <p className="text-center text-slate-400 text-sm mt-4">
+                <p className="text-center text-slate-400 text-xs sm:text-sm mt-4">
                   Menampilkan 10 data terbaru dari {chartData.length} total data
                 </p>
               )}
