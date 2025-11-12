@@ -52,11 +52,14 @@ const AQIScale = ({ onClick }) => {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-        {levels.map((item) => (
+        {levels.map((item, index) => (
           <div
             key={item.level}
             onClick={() => onClick(item.level)}
-            className={`relative group bg-gradient-to-br ${item.color} rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-center text-white shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden cursor-pointer`}
+            className={`relative group bg-gradient-to-br ${
+              item.color
+            } rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-center text-white shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden cursor-pointer 
+            ${index === levels.length - 1 ? "col-span-2 sm:col-span-1" : ""}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl sm:rounded-2xl"></div>
             <div className="relative z-10">
