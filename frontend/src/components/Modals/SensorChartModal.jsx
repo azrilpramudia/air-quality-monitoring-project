@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, TrendingUp, Calendar, Download } from "lucide-react";
 import { styles } from "../../styles/SensorChartModal.Styles.js";
 import { useMQTTContext } from "../../context/MQTTContext";
+import ExcelJS from "exceljs";
 
 const SensorChartModal = ({
   isOpen,
@@ -174,6 +175,71 @@ const SensorChartModal = ({
     return 300 - ((value - minValue) / (maxValue - minValue)) * 300;
   };
 
+  // Export Data to Excel
+  const handleExport = async () => {
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Sensor Data");
+
+      worksheet.columns = [
+        { header: "Tanggal", key: "date", width: 15 },
+        { header: "Waktu", key: "time", width: 12 },
+        { header: `Nilai (${getSensorInfo().unit})`, key: "value", width: 15 },
+        { header: "Status", key: "status", width: 15 },
+      ];
+
+      // calculate status
+      const avg = chartData.reduce((a, b) => a + b.value, 0) / chartData.length;
+
+      chartData.forEach((point) => {
+        let status =
+          point.value > avg * 1.1
+            ? "Tinggi"
+            : point.value < avg * 0.9
+            ? "Rendah"
+            : "Normal";
+
+        worksheet.addRow({
+          date: point.date,
+          time: point.time,
+          value: point.value,
+          status,
+        });
+      });
+
+      // style header
+      worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+      worksheet.getRow(1).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF1E293B" },
+      };
+
+      // auto align
+      worksheet.eachRow((row) => {
+        row.alignment = { vertical: "middle", horizontal: "center" };
+      });
+
+      // create file buffer
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      // trigger download
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `data_${sensorType}_${new Date()
+        .toISOString()
+        .slice(0, 10)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export failed:", err);
+    }
+  };
+
   return (
     <>
       <style>{styles}</style>
@@ -242,7 +308,10 @@ const SensorChartModal = ({
                   </button>
                 ))}
               </div>
-              <button className="flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 bg-slate-800/50 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors">
+              <button
+                onClick={handleExport}
+                className="flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 bg-slate-800/50 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors"
+              >
                 <Download className="h-4 w-4" />
                 <span className="text-xs sm:text-sm font-semibold">
                   Export Data
