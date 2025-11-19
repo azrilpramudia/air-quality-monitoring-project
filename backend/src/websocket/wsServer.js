@@ -6,11 +6,9 @@ export const initWebSocket = (server) => {
   wss = new WebSocketServer({ server });
 
   wss.on("connection", (ws) => {
-    console.log("⚡ Client Connected to WebSocket");
+    console.log("⚡ Client Connected");
 
-    ws.send(
-      JSON.stringify({ event: "connected", message: "WebSocket Ready" })
-    );
+    ws.send(JSON.stringify({ event: "connected", message: "WebSocket Ready" }));
   });
 
   console.log("🔥 WebSocket Server Running");
