@@ -1,7 +1,7 @@
 import mqtt from "mqtt";
 
-const MQTT_BROKER = import.meta.env.VITE_MQTT_URL || "wss://broker.emqx.io:8084/mqtt";
-const MQTT_TOPIC = import.meta.env.VITE_MQTT_TOPIC || "air/quality";
+const MQTT_BROKER = import.meta.env.VITE_MQTT_URL || "wss://broker.hivemq.com:8884/mqtt";
+const MQTT_TOPIC = import.meta.env.VITE_MQTT_TOPIC || "iot/ruang1/sensor";
 const CLIENT_PREFIX = import.meta.env.VITE_MQTT_CLIENT_PREFIX || "react_client_";
 const DEBUG = import.meta.env.VITE_MQTT_DEBUG === "true";
 
