@@ -4,24 +4,27 @@ import { broadcastWS } from "../websocket/wsServer.js";
 
 mqttClient.on("message", async (topic, message) => {
   try {
-    const payload = JSON.parse(message.toString());
-    console.log("📥 MQTT Incoming:", payload);
+    const data = JSON.parse(message.toString());
 
-    // Save data to DB
-    const record = await prisma.sensorData.create({
-      data: {
-        type: payload.type,
-        value: payload.value,
-      },
-    });
+    console.log("📥 Incoming data:", data);
 
-    // Send to WebSocket clients
-    broadcastWS({
-      event: "sensor_update",
-      data: record,
-    });
+    // Map ESP32 → Prisma schema
+    const mapped = {
+      temperature: data.temp_c,
+      humidity: data.rh_pct,
+      tvoc: data.tvoc_ppb,
+      eco2: data.eco2_ppm,
+      dust: data.dust_ugm3 || 0
+    };
+
+    await prisma.sensorData.create({ data: mapped });
+
+    console.log("💾 Saved to DB:", mapped);
+
+    // Broadcast
+    broadcastWS({ event: "new_data", payload: mapped });
 
   } catch (err) {
-    console.error("❌ MQTT Message Handler Error:", err);
+    console.error("❌ MQTT Message Error:", err);
   }
 });

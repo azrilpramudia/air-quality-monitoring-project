@@ -1,5 +1,5 @@
 export const initWS = () => {
-  const ws = new WebSocket("ws://localhost:4000"); // backend WebSocket
+  const ws = new WebSocket("ws://localhost:4000");
 
   ws.onopen = () => {
     console.log("🔌 WebSocket Connected to Backend");
