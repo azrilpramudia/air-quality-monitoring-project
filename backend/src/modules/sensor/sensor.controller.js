@@ -1,11 +1,21 @@
-import * as service from "./sensor.service.js";
-import { success, error } from "../../utils/response.js";
+import prisma from "../../config/prisma.js";
 
-export const getAll = async (req, res, next) => {
+export const getAllSensorData = async (req, res) => {
   try {
-    const data = await service.getAllSensorData();
-    response.success(res, data);
+    const data = await prisma.sensorData.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.status(200).json({
+      status: "success",
+      count: data.length,
+      data,
+    });
   } catch (err) {
-    next(err);
+    console.error("❌ Error fetching data:", err);
+    return res.status(500).json({
+      status: "error",
+      message: "Internal Server Error",
+    });
   }
 };

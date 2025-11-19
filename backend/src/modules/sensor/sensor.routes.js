@@ -1,8 +1,8 @@
-import { Router } from "express";
-import * as controller from "./sensor.controller.js";
+import express from "express";
+import { getAllSensorData } from "./sensor.controller.js";
 
-const router = Router();
+const router = express.Router();
 
-router.get("/", controller.getAll);
+router.get("/", getAllSensorData);
 
 export default router;
