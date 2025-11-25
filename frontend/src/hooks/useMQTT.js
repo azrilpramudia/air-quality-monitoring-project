@@ -61,7 +61,7 @@ export const useMQTT = () => {
 
   return { 
     data, 
-    connected: isConnected,  // ✅ For Hero.jsx
+    connected: isConnected,
     isConnected,
     activeBroker, 
     clientId, 
