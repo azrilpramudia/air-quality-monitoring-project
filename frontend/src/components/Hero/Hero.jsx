@@ -6,6 +6,7 @@ import { useMQTTContext } from "../../context/MQTTContext.jsx";
 
 // ====== Components ======
 import AQICircleDisplay from "./AQICircleDisplay.jsx";
+import PredictionCharts from './PredictionCharts';
 import InfoCardsGrid from "./InfoCardsGrid.jsx";
 import SensorCardsGrid from "./SensorCardsGrid.jsx";
 import AQIScale from "./AQIScale.jsx";
@@ -277,6 +278,7 @@ const Hero = () => {
             currentTime={currentTime}
             onClick={handleAQIClick}
           />
+          <PredictionCharts/>
           <InfoCardsGrid sensorData={sensorData} onOpenChart={openChartModal} />
           <SensorCardsGrid
             sensorData={sensorData}
