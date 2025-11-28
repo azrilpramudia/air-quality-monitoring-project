@@ -11,29 +11,32 @@ mqttClient.on("message", async (topic, message) => {
     try {
       data = JSON.parse(raw);
     } catch {
-      console.error("❌ Invalid JSON:", raw);
+      console.error("❌ Invalid JSON from MQTT:", raw);
       return;
     }
 
     console.log("📥 Incoming data:", data);
 
+    // ---------- MAP DATA SENSOR ----------
     const mapped = {
-      temperature: data.temp_c ?? 0,
-      humidity: data.rh_pct ?? 0,
-      tvoc: data.tvoc_ppb ?? 0,
-      eco2: data.eco2_ppm ?? 0,
-      dust: data.dust_ugm3 ?? 0,
-      aqi: data.aqi ?? 0,
-      timestamp: data.ts,
+      temperature: safeNum(data.temp_c),
+      humidity: safeNum(data.rh_pct),
+      tvoc: safeNum(data.tvoc_ppb),
+      eco2: safeNum(data.eco2_ppm),
+      dust: safeNum(data.dust_ugm3),
+      aqi: safeNum(data.aqi),
+      device_id: data.device_id ?? "unknown",
+      timestamp: data.ts ?? Date.now(),
     };
 
-    console.log("📤 Broadcasting:", mapped);
+    console.log("📤 Broadcasting to WebSocket:", mapped);
 
+    // ---------- BROADCAST TO WS ----------
     broadcastWS({
       type: "sensor_update",
       data: mapped,
     });
   } catch (err) {
-    console.error("❌ MQTT Message Error:", err);
+    console.error("❌ MQTT Handler Error:", err);
   }
 });
