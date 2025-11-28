@@ -1,8 +1,8 @@
-/* eslint-disable no-unused-vars */
+// /* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { Wind, Droplets, Gauge, Activity } from "lucide-react";
-import { useMQTTContext } from "../../context/MQTTContext";
+import { useRealtimeContext } from "../../context/RealtimeContext";
 
 const Navbar = () => {
   const [activeTime, setActiveTime] = useState(
@@ -16,7 +16,7 @@ const Navbar = () => {
   const [progress, setProgress] = useState(0);
   const [wasConnected, setWasConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
-  const { isConnected, activeBroker } = useMQTTContext();
+  const { isConnected } = useRealtimeContext();
 
   // 🟡 Deteksi reconnecting
   useEffect(() => {

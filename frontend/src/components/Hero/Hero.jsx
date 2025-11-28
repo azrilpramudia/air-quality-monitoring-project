@@ -2,11 +2,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Toaster, toast } from "react-hot-toast";
-import { useMQTTContext } from "../../context/MQTTContext.jsx";
+import { useRealtimeContext } from "../../context/RealtimeContext.jsx";
 
 // ====== Components ======
 import AQICircleDisplay from "./AQICircleDisplay.jsx";
-import PredictionCharts from './PredictionCharts';
+import PredictionCharts from "./PredictionCharts";
 import InfoCardsGrid from "./InfoCardsGrid.jsx";
 import SensorCardsGrid from "./SensorCardsGrid.jsx";
 import AQIScale from "./AQIScale.jsx";
@@ -35,7 +35,7 @@ const AIR_ALERT_ID = "air-alert";
 
 const Hero = () => {
   // 🔄 Get live data & connection state from context
-  const { data: sensorData, connected: isConnected } = useMQTTContext();
+  const { data: sensorData, connected: isConnected } = useRealtimeContext();
 
   const [currentView, setCurrentView] = useState("dashboard");
   const [selectedSensor, setSelectedSensor] = useState(null);
@@ -278,7 +278,7 @@ const Hero = () => {
             currentTime={currentTime}
             onClick={handleAQIClick}
           />
-          <PredictionCharts/>
+          <PredictionCharts />
           <InfoCardsGrid sensorData={sensorData} onOpenChart={openChartModal} />
           <SensorCardsGrid
             sensorData={sensorData}

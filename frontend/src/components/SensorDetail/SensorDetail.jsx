@@ -5,12 +5,12 @@ import { createPortal } from "react-dom";
 import { ArrowLeft, Activity, TrendingUp } from "lucide-react";
 import SensorChartModal from "../Modals/SensorChartModal.jsx";
 import { styles } from "../../styles/SensorDetail.Styles.js";
-import { useMQTT } from "../../hooks/useMQTT.js";
 import { sensorInfo } from "../../data/sensorInfo.js";
 import { motion } from "framer-motion";
+import { useRealtimeContext } from "../../context/RealtimeContext.jsx";
 
 const SensorDetail = ({ sensorType, onBack }) => {
-  const { data: mqttData, isConnected } = useMQTT();
+  const { data: mqttData, connected: isConnected } = useRealtimeContext();
   const [chartModal, setChartModal] = useState({
     isOpen: false,
     sensorType: null,

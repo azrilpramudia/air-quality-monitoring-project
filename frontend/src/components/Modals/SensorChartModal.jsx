@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, TrendingUp, Calendar, Download } from "lucide-react";
 import { styles } from "../../styles/SensorChartModal.Styles.js";
-import { useMQTTContext } from "../../context/MQTTContext";
+import { useRealtimeContext } from "../../context/RealtimeContext.jsx";
 import ExcelJS from "exceljs";
 
 const SensorChartModal = ({
@@ -16,9 +16,7 @@ const SensorChartModal = ({
 }) => {
   const [chartData, setChartData] = useState([]);
   const [timeRange, setTimeRange] = useState("7d"); // 7d, 24h, 30d
-
-  // Access MQTT to messages
-  const { lastMessage } = useMQTTContext();
+  const { lastMessage } = useRealtimeContext();
 
   useEffect(() => {
     if (isOpen && sensorType) {
@@ -26,7 +24,6 @@ const SensorChartModal = ({
     }
   }, [isOpen, sensorType, timeRange]);
 
-  // Real-time MQTT update listener
   useEffect(() => {
     if (!lastMessage || !isOpen) return;
 
