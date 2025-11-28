@@ -16,7 +16,7 @@ const Navbar = () => {
   const [progress, setProgress] = useState(0);
   const [wasConnected, setWasConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
-  const { isConnected } = useRealtimeContext();
+  const { connected: isConnected } = useRealtimeContext();
 
   // 🟡 Deteksi reconnecting
   useEffect(() => {
