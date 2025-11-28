@@ -1,8 +1,9 @@
-import { runPrediction } from "../ai/callPythonPredict.js";
+import { runPrediction } from "../../ai/callPythonPredict.js";
 
 export const getPrediction = async (req, res) => {
   try {
-    const realtimeData = req.body; // temperature, humidity, etc.
+    const realtimeData = req.body;
+
     const result = await runPrediction(realtimeData);
 
     res.json({
