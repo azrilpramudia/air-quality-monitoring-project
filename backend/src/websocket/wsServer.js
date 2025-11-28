@@ -1,25 +1,43 @@
 import { WebSocketServer } from "ws";
 
-let wss;
+let wss = null;
 
-export const initWebSocket = (server) => {
-  wss = new WebSocketServer({ server });
+export const initWebSocket = () => {
+  wss = new WebSocketServer({ port: 4001 });
+  console.log("🔥 WebSocket Server running on ws://localhost:4001");
 
   wss.on("connection", (ws) => {
     console.log("⚡ Client Connected");
 
-    ws.send(JSON.stringify({ event: "connected", message: "WebSocket Ready" }));
+    ws.isAlive = true;
+    ws.on("pong", () => (ws.isAlive = true));
+
+    ws.send(
+      JSON.stringify({
+        type: "connected",
+        message: "WebSocket is ready",
+      })
+    );
   });
 
-  console.log("🔥 WebSocket Server Running");
+  // heartbeat every 30 seconds
+  setInterval(() => {
+    wss.clients.forEach((ws) => {
+      if (!ws.isAlive) return ws.terminate(); // disconnected client
+      ws.isAlive = false;
+      ws.ping();
+    });
+  }, 30000);
 };
 
-export const broadcastWS = (data) => {
+export const broadcastWS = (message) => {
   if (!wss) return;
 
+  const data = JSON.stringify(message);
+
   wss.clients.forEach((client) => {
-    if (client.readyState === 1) {
-      client.send(JSON.stringify(data));
+    if (client.readyState === client.OPEN) {
+      client.send(data);
     }
   });
 };

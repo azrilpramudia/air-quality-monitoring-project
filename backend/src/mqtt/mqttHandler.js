@@ -8,22 +8,21 @@ mqttClient.on("message", async (topic, message) => {
 
     console.log("📥 Incoming data:", data);
 
-    // Map ESP32 → Prisma schema
     const mapped = {
-      temperature: data.temp_c,
-      humidity: data.rh_pct,
-      tvoc: data.tvoc_ppb,
-      eco2: data.eco2_ppm,
-      dust: data.dust_ugm3 || 0
+      temperature: data.temp_c ?? 0,
+      humidity: data.rh_pct ?? 0,
+      tvoc: data.tvoc_ppb ?? 0,
+      eco2: data.eco2_ppm ?? 0,
+      dust: data.dust_ugm3 ?? 0,
     };
 
     await prisma.sensorData.create({ data: mapped });
-
     console.log("💾 Saved to DB:", mapped);
 
-    // Broadcast
-    broadcastWS({ event: "new_data", payload: mapped });
-
+    broadcastWS({
+      type: "sensor_update",
+      data: mapped,
+    });
   } catch (err) {
     console.error("❌ MQTT Message Error:", err);
   }

@@ -1,10 +1,8 @@
-import prisma from "../../config/prisma.js";
+import { getAllSensorDataService } from "./sensor.service.js";
 
 export const getAllSensorData = async (req, res) => {
   try {
-    const data = await prisma.sensorData.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    const data = await getAllSensorDataService();
 
     return res.status(200).json({
       status: "success",
@@ -12,7 +10,7 @@ export const getAllSensorData = async (req, res) => {
       data,
     });
   } catch (err) {
-    console.error("❌ Error fetching data:", err);
+    console.error("❌ Error fetching sensor data:", err);
     return res.status(500).json({
       status: "error",
       message: "Internal Server Error",

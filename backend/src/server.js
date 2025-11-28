@@ -10,9 +10,9 @@ const PORT = process.env.PORT || 4000;
 
 const server = http.createServer(app);
 
-// WebSocket run on same server
-initWebSocket(server);
+// Start WebSocket on port 4001
+initWebSocket();
 
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 HTTP Server running on http://localhost:${PORT}`);
 });
