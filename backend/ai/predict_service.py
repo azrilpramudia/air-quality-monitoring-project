@@ -1,77 +1,56 @@
-import sys
-import json
-import joblib
+import xgboost as xgb
 import numpy as np
-import traceback
-import os
+import joblib
+from fastapi import FastAPI
+import uvicorn
 
-# ============================
-# FIX MODEL PATH
-# ============================
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "models", "xgb_multi.pkl")
+# ====================== LOAD METADATA ======================
+meta = joblib.load("models/xgb_native/metadata.pkl")
+features = meta["features"]
+target_cols = meta["target_cols"]
+H = meta["H"]
 
-# ============================
-# LOAD MODEL
-# ============================
-try:
-    model = joblib.load(MODEL_PATH)
-except Exception as e:
-    print(json.dumps({"error": f"Failed to load model: {str(e)}"}))
-    sys.stdout.flush()
-    sys.exit(1)
+# ====================== LOAD BOOSTERS ======================
+models = []
 
-# Safety parser
-def safe(v):
-    try:
-        return float(v)
-    except:
-        return 0.0
+for i in range(len(target_cols)):
+    booster = xgb.Booster()
+    booster.load_model(f"models/xgb_native/model_target_{i}.json")
+    models.append(booster)
 
-# ============================
-# MAIN LOOP
-# ============================
-while True:
-    try:
-        raw_input = sys.stdin.readline()
-        if not raw_input:
-            break
+print("Loaded", len(models), "XGBoost boosters.")
+print("Targets:", target_cols[:10], "...")
 
-        raw_input = raw_input.strip()
-        if raw_input == "":
-            continue
+app = FastAPI()
 
-        # Parse JSON from Node.js
-        data = json.loads(raw_input)
+# ====================== PREDICT API ======================
+@app.post("/predict")
+def predict(payload: dict):
+    """
+    payload = {
+      "input": { "<feature_name>": value, ... }
+    }
+    """
 
-        # Prepare features in correct order
-        features = np.array([
-            safe(data.get("temperature")),
-            safe(data.get("humidity")),
-            safe(data.get("tvoc")),
-            safe(data.get("eco2")),
-            safe(data.get("dust")),
-        ]).reshape(1, -1)
+    # Urutkan fitur sesuai training
+    X = np.array([[payload["input"][f] for f in features]], dtype=np.float32)
+    dmat = xgb.DMatrix(X)
 
-        # =============== PREDICT ===============
-        try:
-            prediction = model.predict(features)
-        except Exception as pe:
-            print(json.dumps({"error": f"Prediction failed: {str(pe)}"}))
-            sys.stdout.flush()
-            continue
+    preds = []
+    for booster in models:
+        p = booster.predict(dmat)[0]
+        preds.append(float(p))
 
-        # Convert numpy → normal Python
-        if isinstance(prediction, np.ndarray):
-            prediction = prediction.tolist()
+    # Bungkus predictions
+    result = {}
+    for col, val in zip(target_cols, preds):
+        result[col] = val
 
-        # Output result
-        print(json.dumps({
-            "prediction": prediction
-        }))
-        sys.stdout.flush()
+    return {
+        "horizon": H,
+        "prediction": result
+    }
 
-    except Exception as e:
-        error_msg = traceback.format_exc()
-        print(json.dumps({"error": error_msg}))
-        sys.stdout.flush()
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=9000)

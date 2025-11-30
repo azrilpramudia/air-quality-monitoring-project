@@ -57,7 +57,7 @@ df0 = df0.set_index(idx).drop(columns=[c for c in df0.columns if c == "ts"]).sor
 # ===================== RESAMPLE 1min & LIMIT LOOKBACK =====================
 df = (
     df0[BASE_COLS]
-    .asfreq("1min")                           # per-minute frequency
+    .asfreq("1min")
     .interpolate(limit_direction="both")
 )
 
@@ -72,7 +72,7 @@ available_minutes = len(df)
 print("Minute range used:", df.index.min(), "→", df.index.max(), "| rows (minutes):", available_minutes)
 
 # ===================== AUTO-CLAMP H & KEBIJAKAN DATA PENDEK =====================
-min_hist_for_features = 2               # super minimal supaya bisa jalan untuk uji
+min_hist_for_features = 2
 max_h_by_data = max(1, available_minutes - min_hist_for_features - 1)
 
 if H > max_h_by_data:
@@ -88,12 +88,12 @@ if available_minutes < 3 and not TINY_OK:
 if available_minutes < 3 and TINY_OK:
     print("[TINY] Data < 3 minutes. Lanjut training tiny-mode (sekadar membentuk model untuk uji alur).")
 
-# ===================== ADAPTIVE PYRAMIDAL LAGS (per-minute) =====================
+# ===================== ADAPTIVE PYRAMIDAL LAGS =====================
 max_viable_lag = max(0, available_minutes - H - 1)
 upper = min(30, max_viable_lag)
 lag_minutes = list(range(1, upper+1)) if upper >= 1 else []
 
-anchor_candidates = [60, 180, 360, 720, 1440, 10080]  # 1h,3h,6h,12h,1d,1w (menit)
+anchor_candidates = [60, 180, 360, 720, 1440, 10080]
 for a in anchor_candidates:
     if a <= max_viable_lag and a not in lag_minutes:
         lag_minutes.append(a)
@@ -101,7 +101,7 @@ lag_minutes = sorted(set(lag_minutes))
 print("Lag count (minutes):", len(lag_minutes), "| first:", lag_minutes[:20] if lag_minutes else "[]")
 
 # ===================== FEATURES =====================
-hours = df.index.hour.astype(np.float32)   # dipertahankan untuk siklus harian
+hours = df.index.hour.astype(np.float32)
 cyc = pd.DataFrame({
     "sin_day": np.sin(2*np.pi*hours/24.0),
     "cos_day": np.cos(2*np.pi*hours/24.0),
@@ -118,7 +118,7 @@ if lag_minutes:
 parts = [df[BASE_COLS]] + (lag_blocks if lag_blocks else []) + [cyc]
 X = pd.concat(parts, axis=1).astype("float32")
 
-# ===================== MULTI-HORIZON TARGETS (1..H) =====================
+# ===================== MULTI-HORIZON TARGETS =====================
 target_cols = []
 tcols = {}
 for h in range(1, H+1):
@@ -132,6 +132,7 @@ Y = pd.DataFrame(tcols, index=df.index).astype("float32")
 
 XY = pd.concat([X, Y], axis=1).dropna()
 usable = len(XY)
+
 if usable == 0:
     if TINY_OK and available_minutes >= 2:
         print("[TINY] Tidak ada baris usable setelah shift/lag. "
@@ -152,19 +153,16 @@ X = XY[X.columns]
 Y = XY[target_cols]
 print("Usable rows:", usable, "| Features:", X.shape[1], "| Targets:", Y.shape[1], "| Final H:", H)
 
-# ===================== TRAIN (XGBoost optimized params) =====================
-# adaptive choices based on dataset size
+# ===================== TRAIN =====================
 if usable < 1000:
-    n_estimators = 40         
-    max_depth = 3             
-    learning_rate = 0.10      
-
+    n_estimators = 40
+    max_depth = 3
+    learning_rate = 0.10
 else:
-    n_estimators = 80         
-    max_depth = 4             
-    learning_rate = 0.08 
+    n_estimators = 80
+    max_depth = 4
+    learning_rate = 0.08
 
-# build param dict (usable also for xgb API if later needed)
 tree_method = "gpu_hist" if (USE_GPU) else "hist"
 print(f"[INFO] xgboost: tree_method={tree_method}, n_estimators={n_estimators}, max_depth={max_depth}, lr={learning_rate}")
 
@@ -179,7 +177,6 @@ base = XGBRegressor(
     n_jobs=-1,
     verbosity=1,
     random_state=42,
-    # enable_predictor may help memory on some setups
 )
 
 model = MultiOutputRegressor(base)
@@ -191,13 +188,11 @@ if usable >= 20 and not TINY_OK:
     Xtr, Xte, Ytr, Yte = train_test_split(X, Y, test_size=0.2, shuffle=False)
     print("Train rows:", len(Xtr), " Test rows:", len(Xte), " Features:", X.shape[1])
 
-    # Note: MultiOutputRegressor doesn't forward early_stopping kwargs easily,
-    # but XGBRegressor will still use n_estimators; we keep n_estimators moderate.
-    model.fit(Xtr, Ytr)   # if this still slow, consider per-target training (parallel)
+    model.fit(Xtr, Ytr)
     pred = model.predict(Xte)
 
-    # cek beberapa horizon yang valid saja (short, daily, akhir)
     ycols = list(Y.columns)
+
     def maybe_mae(col_name):
         if col_name in ycols:
             i = ycols.index(col_name)
@@ -206,19 +201,20 @@ if usable >= 20 and not TINY_OK:
         return None
 
     checks = [1, 60, 1440, H]
-    to_check = sorted(set([f"y_temp+{min(c,H)}" for c in checks] + [f"y_tvoc+{min(c,H)}" for c in checks]))
+    to_check = sorted(set([f"y_temp+{min(c,H)}" for c in checks] +
+                          [f"y_tvoc+{min(c,H)}" for c in checks]))
     report = [m for m in (maybe_mae(c) for c in to_check) if m]
     print("MAE:", " | ".join(report) if report else "(skip)")
 else:
-    print("[TINY] Fit full dataset tanpa test split (hanya untuk uji alur)")
+    print("[TINY] Fit full dataset tanpa test split")
     model.fit(X, Y)
 
-# ===================== SAVE BUNDLE =====================
+# ===================== SAVE BUNDLE (ORIGINAL, NO CHANGE) =====================
 os.makedirs("models", exist_ok=True)
 bundle = {
     "model": model,
     "features": X.columns.tolist(),
-    "target_cols": list(Y.columns),  # urutan output (y_temp+1.., y_tvoc+1..)
+    "target_cols": list(Y.columns),
     "H": H,
     "lag_minutes": lag_minutes,
     "freq": "1min",
@@ -226,3 +222,27 @@ bundle = {
 }
 joblib.dump(bundle, os.path.join("models", "xgb_multi.pkl"))
 print("✅ saved: models/xgb_multi.pkl")
+
+# ===================== SAVE XGBOOST NATIVE (ADDED, NO LOGIC CHANGED) =====================
+# Menyimpan setiap estimator XGBoost dalam format JSON resmi
+os.makedirs("models/xgb_native", exist_ok=True)
+
+metadata = {
+    "features": X.columns.tolist(),
+    "target_cols": list(Y.columns),
+    "H": H,
+    "lag_minutes": lag_minutes,
+    "freq": "1min",
+    "base_cols": BASE_COLS,
+}
+
+# Simpan booster XGBRegressor per target
+for i, est in enumerate(model.estimators_):
+    est.save_model(f"models/xgb_native/model_target_{i}.json")
+
+# Simpan metadata terpisah
+joblib.dump(metadata, "models/xgb_native/metadata.pkl")
+
+print("✅ Saved native XGBoost models to models/xgb_native/")
+print("🎉 Model siap dipakai di backend tanpa error pickle!")
+# Simpan model native XGBoost untuk setiap target dalam format JSON

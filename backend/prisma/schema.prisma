@@ -14,5 +14,6 @@ model SensorData {
     tvoc        Int
     eco2        Int
     dust        Float
+    aqi         Float? 
     createdAt   DateTime @default(now())
 }
