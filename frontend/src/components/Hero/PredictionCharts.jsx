@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useRef } from "react";
 import {
   LineChart,
@@ -8,6 +9,10 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
+
+// 🔥 Import your realtime sensor hook
+// Pastikan path-nya benar sesuai folder project kamu
+import { useRealtimeSensor } from "../../hooks/useRealtimeSensor";
 
 const CustomTooltip = ({ active, payload, unit }) => {
   if (active && payload && payload.length) {
@@ -28,32 +33,68 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
   const [data, setData] = useState([]);
   const scrollRef = useRef(null);
 
-  // ==========================================
-  // FETCH PREDICTION FROM BACKEND
-  // ==========================================
-  useEffect(() => {
-    async function fetchPrediction() {
-      try {
-        const res = await fetch(`/ai/prediction/${type}`);
-        const json = await res.json();
-        setData(json.data);
-      } catch (err) {
-        console.error("Prediction fetch error:", err);
-        setData([]);
-      }
-    }
+  // =====================================================
+  // REAL-TIME SENSOR HOOK
+  // =====================================================
+  const sensor = useRealtimeSensor();
 
+  // Track value terakhir (temp / tvoc)
+  const [latestValue, setLatestValue] = useState(null);
+
+  // Ketika data sensor real-time masuk → update latestValue
+  useEffect(() => {
+    if (!sensor) return;
+
+    if (type === "temperature" && sensor.temperature) {
+      setLatestValue(sensor.temperature);
+    }
+    if (type === "tvoc" && sensor.tvoc) {
+      setLatestValue(sensor.tvoc);
+    }
+  }, [sensor, type]);
+
+  // =====================================================
+  // FETCH PREDICTION (dipanggil saat load pertama + saat sensor berubah)
+  // =====================================================
+  const fetchPrediction = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/ai/prediction/${type}`);
+      const json = await res.json();
+
+      if (json?.data) {
+        setData(json.data);
+      }
+    } catch (err) {
+      console.error("Prediction fetch error:", err);
+    }
+  };
+
+  // load awal
+  useEffect(() => {
     fetchPrediction();
   }, [type]);
 
+  // Re-run prediction ketika data sensor update real-time
+  useEffect(() => {
+    if (latestValue !== null) {
+      fetchPrediction();
+    }
+  }, [latestValue]);
+
   if (!data.length) return null;
 
-  // Backend belum kirim historical
-  const historicalData = [];
-  const predictedData = data;
+  // Pisahkan data actual dan predicted
+  const historicalData = data.filter((d) => d.type === "actual");
+  const predictedData = data.filter((d) => d.type === "predicted");
 
-  // currentValue = value pertama (prediksi waktu sekarang)
-  const currentValue = data[0]?.value || 0;
+  // Jika ingin menyambung garis actual ke prediksi:
+  if (historicalData.length > 0 && predictedData.length > 0) {
+    predictedData.unshift(historicalData[historicalData.length - 1]);
+  }
+
+  // nilai sekarang (actual)
+  const currentValue =
+    historicalData.length > 0 ? historicalData[0].value : data[0].value;
 
   const yAxisDomain = type === "temperature" ? [10, 45] : [100, 2000];
 
@@ -165,7 +206,7 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
 
                 <Tooltip content={<CustomTooltip unit={unit} />} />
 
-                {/* HISTORICAL (kosong untuk sekarang) */}
+                {/* HISTORICAL */}
                 <Line
                   data={historicalData}
                   type="monotone"

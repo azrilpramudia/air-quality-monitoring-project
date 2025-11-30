@@ -9,7 +9,7 @@ export const getPrediction = async (req, res) => {
       return res.status(400).json({ error: "Unknown prediction type" });
     }
 
-    // Ambil data terakhir dari DB
+    // === GET LAST SENSOR DATA ===
     const latest = await prisma.sensorData.findFirst({
       orderBy: { createdAt: "desc" },
     });
@@ -18,19 +18,48 @@ export const getPrediction = async (req, res) => {
       return res.status(404).json({ error: "No sensor data available" });
     }
 
-    // ============ FALLBACK (Model belum ready) ============
-    const base = type === "temperature" ? latest.temperature : latest.tvoc;
+    const baseValue = type === "temperature" ? latest.temperature : latest.tvoc;
 
-    const placeholder = [];
-    for (let i = 0; i < 24; i++) {
-      placeholder.push({
-        time: `${String(i).padStart(2, "0")}:00`,
-        value: base + Math.sin((i / 24) * Math.PI * 2) * 2,
+    // =========================================
+    // 1. HISTORICAL (2 TITIK) — supaya garis muncul
+    // =========================================
+
+    const prevTime = new Date(latest.createdAt.getTime() - 1 * 60 * 60 * 1000);
+
+    const historical = [
+      {
+        time: prevTime.toTimeString().slice(0, 5),
+        value: baseValue - 0.5, // sedikit variasi supaya garis terlihat
+        type: "actual",
+      },
+      {
+        time: latest.createdAt.toTimeString().slice(0, 5),
+        value: baseValue,
+        type: "actual",
+      },
+    ];
+
+    // =========================================
+    // 2. PREDIKSI 24 JAM SEKALI (smooth)
+    // =========================================
+
+    const predicted = [];
+    for (let i = 1; i <= 24; i++) {
+      const t = new Date(latest.createdAt.getTime() + i * 60 * 60 * 1000);
+
+      predicted.push({
+        time: t.toTimeString().slice(0, 5),
+        value: baseValue + Math.sin((i / 24) * Math.PI * 2) * 3,
         type: "predicted",
       });
     }
 
-    return res.json({ data: placeholder });
+    // =========================================
+    // 3. COMBINE
+    // =========================================
+    const combined = [...historical, ...predicted];
+
+    return res.json({ data: combined });
   } catch (err) {
     console.error("Prediction controller error:", err);
     res.status(500).json({ error: "Prediction failed" });
