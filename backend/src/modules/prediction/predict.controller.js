@@ -1,4 +1,4 @@
-import { runPrediction } from "../../ai/callPythonPredict.js";
+import { runPrediction } from "../../../ai/callPythonPredict.js";
 
 export const getPrediction = async (req, res) => {
   try {

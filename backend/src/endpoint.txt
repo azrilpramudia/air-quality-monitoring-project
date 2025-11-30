@@ -1,0 +1,3 @@
+GET  http://localhost:5000/ai/health
+GET http://localhost:5000/api/sensor
+POST http://localhost:5000/ai/predict
