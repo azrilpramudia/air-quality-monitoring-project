@@ -9,48 +9,6 @@ import {
   Tooltip,
 } from "recharts";
 
-// Generate data 24 jam ke depan mulai dari 00:00
-const generatePredictionData = (type) => {
-  const data = [];
-  const now = new Date();
-
-  for (let i = 0; i < 24; i++) {
-    const timeLabel = `${i.toString().padStart(2, "0")}:00`;
-
-    if (type === "temperature") {
-      const baseTemp = 27;
-      const variation = Math.sin((i / 24) * Math.PI * 2) * 8;
-      const randomNoise = (Math.random() - 0.5) * 2;
-      const value = Math.max(
-        10,
-        Math.min(45, baseTemp + variation + randomNoise)
-      );
-
-      data.push({
-        time: timeLabel,
-        value: Number(value.toFixed(1)),
-        type: i <= now.getHours() ? "actual" : "predicted",
-      });
-    } else {
-      const baseTVOC = 600;
-      const variation = Math.sin((i / 24) * Math.PI * 2) * 300;
-      const randomNoise = (Math.random() - 0.5) * 100;
-      const value = Math.max(
-        100,
-        Math.min(2000, baseTVOC + variation + randomNoise)
-      );
-
-      data.push({
-        time: timeLabel,
-        value: Math.round(value),
-        type: i <= now.getHours() ? "actual" : "predicted",
-      });
-    }
-  }
-
-  return data;
-};
-
 const CustomTooltip = ({ active, payload, unit }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -70,20 +28,32 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
   const [data, setData] = useState([]);
   const scrollRef = useRef(null);
 
+  // ==========================================
+  // FETCH PREDICTION FROM BACKEND
+  // ==========================================
   useEffect(() => {
-    setData(generatePredictionData(type));
+    async function fetchPrediction() {
+      try {
+        const res = await fetch(`/ai/prediction/${type}`);
+        const json = await res.json();
+        setData(json.data);
+      } catch (err) {
+        console.error("Prediction fetch error:", err);
+        setData([]);
+      }
+    }
+
+    fetchPrediction();
   }, [type]);
 
   if (!data.length) return null;
 
-  const currentValue = data.find((d) => d.type === "actual")?.value || 0;
+  // Backend belum kirim historical
+  const historicalData = [];
+  const predictedData = data;
 
-  const historicalData = data.filter((d) => d.type === "actual");
-  const predictedData = data.filter((d) => d.type === "predicted");
-
-  if (historicalData.length > 0 && predictedData.length > 0) {
-    predictedData.unshift(historicalData[historicalData.length - 1]);
-  }
+  // currentValue = value pertama (prediksi waktu sekarang)
+  const currentValue = data[0]?.value || 0;
 
   const yAxisDomain = type === "temperature" ? [10, 45] : [100, 2000];
 
@@ -101,10 +71,9 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
 
   return (
     <div className="bg-slate-900/70 backdrop-blur-sm rounded-2xl border border-slate-700/50 overflow-hidden">
-      {/* HEADER — SUDAH RATA KIRI */}
+      {/* HEADER */}
       <div className="p-5 pb-4 border-b border-slate-700/30">
         <div className="flex items-start justify-between">
-          {/* Left Section */}
           <div className="flex items-center gap-3">
             <div
               className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl border"
@@ -128,7 +97,7 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
             </div>
           </div>
 
-          {/* VALUE - RATA KIRI */}
+          {/* VALUE */}
           <div className="text-left flex flex-col items-start">
             <div className="text-4xl font-black text-white leading-none mb-1">
               {currentValue}
@@ -196,7 +165,7 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
 
                 <Tooltip content={<CustomTooltip unit={unit} />} />
 
-                {/* GARIS HISTORIS */}
+                {/* HISTORICAL (kosong untuk sekarang) */}
                 <Line
                   data={historicalData}
                   type="monotone"
@@ -204,16 +173,10 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
                   stroke={color}
                   strokeWidth={3}
                   dot={{ fill: color, r: 4, strokeWidth: 0 }}
-                  activeDot={{
-                    r: 6,
-                    fill: color,
-                    strokeWidth: 2,
-                    stroke: "#0f172a",
-                  }}
                   isAnimationActive={false}
                 />
 
-                {/* GARIS AI PREDIKSI */}
+                {/* PREDICTED */}
                 <Line
                   data={predictedData}
                   type="monotone"
@@ -222,12 +185,6 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
                   strokeWidth={3}
                   strokeDasharray="8 4"
                   dot={{ fill: "#F59E0B", r: 4, strokeWidth: 0 }}
-                  activeDot={{
-                    r: 6,
-                    fill: "#F59E0B",
-                    strokeWidth: 2,
-                    stroke: "#0f172a",
-                  }}
                   isAnimationActive={false}
                 />
               </LineChart>
@@ -235,7 +192,6 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
           </div>
         </div>
 
-        {/* Scroll Indicator */}
         <div className="absolute bottom-2 right-2 text-[10px] text-slate-500 bg-slate-900/80 px-2 py-1 rounded">
           ← Geser untuk melihat →
         </div>
@@ -281,7 +237,6 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
 const PredictionCharts = () => {
   return (
     <div className="glass-effect rounded-2xl sm:rounded-3xl p-10 sm:p-8 md:p-10 shadow-2xl animate-slide-in sm:mb-8">
-      {/* HEADER UTAMA */}
       <div className="text-center mb-6">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 sm:mb-3">
           Prediksi Kualitas Udara
@@ -291,7 +246,6 @@ const PredictionCharts = () => {
           Timeline 24 jam – geser grafik untuk melihat detail prediksi
         </p>
 
-        {/* BADGE BARU */}
         <div
           className="
             inline-flex items-center gap-2
@@ -313,7 +267,6 @@ const PredictionCharts = () => {
         </div>
       </div>
 
-      {/* GRID CHART */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <PredictionChart
           type="temperature"

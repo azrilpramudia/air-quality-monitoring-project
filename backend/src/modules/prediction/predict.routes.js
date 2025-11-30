@@ -1,10 +1,9 @@
-import express from "express";
+import { Router } from "express";
 import { getPrediction } from "./predict.controller.js";
-import { checkPythonHealth } from "./predict.health.controller.js";
 
-const router = express.Router();
+const router = Router();
 
-router.post("/predict", getPrediction);
-router.get("/health", checkPythonHealth);
+// /ai/prediction/:type
+router.get("/prediction/:type", getPrediction);
 
 export default router;
