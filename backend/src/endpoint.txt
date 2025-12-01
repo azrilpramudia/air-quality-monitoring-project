@@ -1,3 +1,7 @@
-GET  http://localhost:5000/ai/health
-GET http://localhost:5000/api/sensor
-POST http://localhost:5000/ai/predict
+| Method  | Endpoint                              | Description                    |
+| ------- | ------------------------------------- | ------------------------------ |
+| **GET** | `/ai/prediction/:type`                | Prediksi 24 jam                |
+| **GET** | `/ai/prediction-range/:type?hours=48` | Prediksi custom (1–240 jam)    |
+| **GET** | `/ai/prediction-today/:type`          | Prediksi untuk hari ini        |
+| **GET** | `/ai/prediction-7days/:type`          | Prediksi 7 hari ke depan       |
+| **GET** | `/ai/prediction-history/:type`        | Ambil riwayat prediksi dari DB |
