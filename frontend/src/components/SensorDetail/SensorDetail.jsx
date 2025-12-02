@@ -109,113 +109,11 @@ const SensorDetail = ({ sensorType, onBack }) => {
                   {info.fullName}
                 </p>
               </div>
-              <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full border border-white/30 shadow-lg">
-                <div
-                  className={`w-3 h-3 rounded-full ${
-                    isConnected ? "bg-green-400 animate-pulse" : "bg-red-500"
-                  }`}
-                ></div>
-                <span className="text-sm font-bold text-white">
-                  {isConnected ? "LIVE DATA" : "DISCONNECTED"}
-                </span>
-              </div>
+              
             </div>
           </div>
 
-          {/* Current Data */}
-          <section className="bg-slate-900/40 backdrop-blur-xl rounded-3xl p-6 md:p-8 mb-8 border border-slate-700/50 shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <Activity className="h-6 w-6 text-cyan-400" />
-                <h2 className="text-2xl md:text-3xl font-bold text-white">
-                  Data Real-Time
-                </h2>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-              {sensorType === "SHT31" && (
-                <>
-                  <DataCard
-                    label="Suhu"
-                    value={`${currentData.temperature ?? "--"}°C`}
-                    icon="🌡️"
-                    color="cyan"
-                    onClick={() =>
-                      openChartModal(
-                        "temperature",
-                        `${currentData.temperature ?? "--"}°C`,
-                        "🌡️",
-                        "from-yellow-500 to-orange-500"
-                      )
-                    }
-                  />
-                  <DataCard
-                    label="Kelembapan"
-                    value={`${currentData.humidity ?? "--"}%`}
-                    icon="💧"
-                    color="blue"
-                    onClick={() =>
-                      openChartModal(
-                        "humidity",
-                        `${currentData.humidity ?? "--"}%`,
-                        "💧",
-                        "from-blue-500 to-cyan-500"
-                      )
-                    }
-                  />
-                </>
-              )}
-              {sensorType === "GP2Y1010AU0F" && (
-                <DataCard
-                  label="Konsentrasi Debu"
-                  value={`${currentData.dust ?? "--"} µg/m³`}
-                  icon="💨"
-                  color="purple"
-                  onClick={() =>
-                    openChartModal(
-                      "dust",
-                      `${currentData.dust ?? "--"} µg/m³`,
-                      "💨",
-                      "from-slate-500 to-slate-600"
-                    )
-                  }
-                />
-              )}
-              {sensorType === "ENS160" && (
-                <>
-                  <DataCard
-                    label="TVOC"
-                    value={`${currentData.tvoc ?? "--"} ppb`}
-                    icon="🌿"
-                    color="green"
-                    onClick={() =>
-                      openChartModal(
-                        "tvoc",
-                        `${currentData.tvoc ?? "--"} ppb`,
-                        "🌿",
-                        "from-cyan-500 to-teal-500"
-                      )
-                    }
-                  />
-                  <DataCard
-                    label="eCO₂"
-                    value={`${currentData.eco2 ?? "--"} ppm`}
-                    icon="🌍"
-                    color="teal"
-                    onClick={() =>
-                      openChartModal(
-                        "eco2",
-                        `${currentData.eco2 ?? "--"} ppm`,
-                        "🌍",
-                        "from-purple-500 to-pink-500"
-                      )
-                    }
-                  />
-                </>
-              )}
-            </div>
-          </section>
+         
 
           {/* Sensor Description Section */}
           <motion.section
