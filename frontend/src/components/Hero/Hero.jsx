@@ -7,7 +7,6 @@ import { useRealtimeContext } from "../../context/RealtimeContext.jsx";
 // ====== Components ======
 import AQICircleDisplay from "./AQICircleDisplay.jsx";
 import PredictionCharts from "./PredictionCharts";
-import InfoCardsGrid from "./InfoCardsGrid.jsx";
 import SensorCardsGrid from "./SensorCardsGrid.jsx";
 import AQIScale from "./AQIScale.jsx";
 import SensorDetail from "../SensorDetail/SensorDetail.jsx";
@@ -20,10 +19,10 @@ import { getAQIInfo } from "../../utils/getAQIInfo.js";
 
 // ====== Constants ======
 const pageMotionProps = {
-  initial: { opacity: 0, y: 30 },
+  initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -30 },
-  transition: { duration: 0.5, ease: "easeOut" },
+  exit: { opacity: 0, y: -20 },
+  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }, // Custom easing for smoother animation
 };
 
 const THRESHOLDS = {
@@ -54,6 +53,12 @@ const Hero = () => {
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  // === Smooth scroll to top on first load ===
+  useEffect(() => {
+    // Scroll to top smoothly when component first mounts
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   // === Alert Toast ===
@@ -236,7 +241,10 @@ const Hero = () => {
   // === Detail View ===
   if (currentView === "detail" && selectedSensor) {
     return (
-      <motion.div {...pageMotionProps}>
+      <motion.div 
+        {...pageMotionProps}
+        key="detail-view"
+      >
         <Toaster />
         <SensorDetail
           sensorType={selectedSensor}
@@ -253,11 +261,35 @@ const Hero = () => {
       <Toaster />
       <motion.div
         {...pageMotionProps}
+        key="dashboard-view"
         id="hero-root"
         className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 min-h-screen text-slate-100 overflow-hidden"
       >
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 0.1, scale: 1 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="absolute top-20 -left-20 w-96 h-96 bg-cyan-500 rounded-full blur-3xl"
+          />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 0.1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+            className="absolute bottom-20 -right-20 w-96 h-96 bg-purple-500 rounded-full blur-3xl"
+          />
+        </div>
+
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div id="hero-top" className="text-center mb-10 sm:mb-14">
+          {/* Header */}
+          <motion.div 
+            id="hero-top" 
+            className="text-center mb-10 sm:mb-14"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="inline-flex items-center space-x-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-4 py-2 mb-4">
               <span className="text-xs font-semibold text-cyan-400 tracking-wider">
                 REAL-TIME MONITORING
@@ -270,21 +302,30 @@ const Hero = () => {
               Pemantauan kualitas udara dan parameter lingkungan secara
               real-time dengan teknologi sensor terkini
             </p>
-          </div>
+          </motion.div>
 
+          {/* 1. AQI Circle Display */}
           <AQICircleDisplay
             aqiInfo={aqiInfo}
             sensorData={sensorData}
             currentTime={currentTime}
             onClick={handleAQIClick}
           />
-          <PredictionCharts />
-          <InfoCardsGrid sensorData={sensorData} onOpenChart={openChartModal} />
+          
+          {/* 2. Sensor Cards Grid */}
           <SensorCardsGrid
             sensorData={sensorData}
+            onOpenChart={openChartModal}
             handleSensorClick={handleSensorClick}
           />
-          <AQIScale onClick={handleAQIClick} />
+          
+          {/* 3. AQI Scale - Pindah ke atas Prediction Charts */}
+          <div className="mb-10 sm:mb-12">
+            <AQIScale onClick={handleAQIClick} />
+          </div>
+          
+          {/* 4. Prediction Charts - Di paling bawah */}
+          <PredictionCharts />
         </div>
       </motion.div>
 

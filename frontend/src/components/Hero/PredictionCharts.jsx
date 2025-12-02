@@ -312,11 +312,21 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
 
 const PredictionCharts = () => {
   return (
-    <div className="glass-effect rounded-2xl sm:rounded-3xl p-10 sm:p-8 md:p-10 shadow-2xl animate-slide-in sm:mb-8">
-      <h2 className="text-center text-3xl font-bold text-white mb-4">
-        Prediksi Kualitas Udara
-      </h2>
+    <div 
+      className="glass-effect rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl animate-slide-in mb-8"
+      style={{ animationDelay: "0.35s" }}
+    >
+      {/* Header Section dengan spacing yang lebih baik */}
+      <div className="text-center mb-8">
+        <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
+          Prediksi Kualitas Udara
+        </h2>
+        <p className="text-slate-400 text-xs sm:text-sm px-4">
+          Analisis prediktif berbasis AI untuk membantu Anda merencanakan aktivitas berdasarkan kondisi udara masa depan
+        </p>
+      </div>
 
+      {/* Charts Grid dengan spacing yang konsisten */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <PredictionChart
           type="temperature"

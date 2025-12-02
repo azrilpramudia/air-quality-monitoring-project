@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
 
-const SensorCardsGrid = ({ sensorData, handleSensorClick }) => {
+const SensorCardsGrid = ({ sensorData, onOpenChart, handleSensorClick }) => {
   const sensors = [
     {
       type: "SHT31",
@@ -10,14 +10,20 @@ const SensorCardsGrid = ({ sensorData, handleSensorClick }) => {
       icon: "🌡️",
       data: [
         {
-          label: "Temperature",
+          label: "Suhu",
           value: `${sensorData.temperature ?? "--"}°C`,
           icon: "🌡️",
+          chartType: "temperature",
+          chartIcon: "🌡️",
+          chartColor: "from-yellow-500 to-orange-500",
         },
         {
-          label: "Humidity",
+          label: "Kelembapan",
           value: `${sensorData.humidity ?? "--"}%`,
           icon: "💧",
+          chartType: "humidity",
+          chartIcon: "💧",
+          chartColor: "from-blue-500 to-cyan-500",
         },
       ],
     },
@@ -29,9 +35,12 @@ const SensorCardsGrid = ({ sensorData, handleSensorClick }) => {
       icon: "💨",
       data: [
         {
-          label: "Dust",
+          label: "Debu",
           value: `${sensorData.dust ?? "--"} µg/m³`,
           icon: "💨",
+          chartType: "dust",
+          chartIcon: "💨",
+          chartColor: "from-slate-500 to-slate-600",
         },
       ],
     },
@@ -46,15 +55,26 @@ const SensorCardsGrid = ({ sensorData, handleSensorClick }) => {
           label: "TVOC",
           value: `${sensorData.tvoc ?? "--"} ppb`,
           icon: "🌿",
+          chartType: "tvoc",
+          chartIcon: "🌿",
+          chartColor: "from-cyan-500 to-teal-500",
         },
         {
           label: "eCO₂",
           value: `${sensorData.eco2 ?? "--"} ppm`,
           icon: "🌍",
+          chartType: "eco2",
+          chartIcon: "🌍",
+          chartColor: "from-purple-500 to-pink-500",
         },
       ],
     },
   ];
+
+  const handleDetailClick = (e, chartType, value, chartIcon, chartColor) => {
+    e.stopPropagation(); // Prevent card click event
+    onOpenChart(chartType, value, chartIcon, chartColor);
+  };
 
   return (
     <div
@@ -64,10 +84,9 @@ const SensorCardsGrid = ({ sensorData, handleSensorClick }) => {
       {sensors.map((sensor, i) => (
         <div
           key={i}
-          onClick={() => handleSensorClick(sensor.type)} // Pass sensor type on click
-          className="group relative glass-effect rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 cursor-pointer hover:-translate-y-2 border border-slate-700/50 hover:border-cyan-500/50 flex flex-col"
+          className="group relative glass-effect rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 border border-slate-700/50 hover:border-cyan-500/50 flex flex-col"
         >
-          {/* Header Gradationt Color */}
+          {/* Header Gradient Color */}
           <div
             className={`relative bg-gradient-to-r ${sensor.color} p-5 sm:p-6 text-white overflow-hidden`}
           >
@@ -91,12 +110,21 @@ const SensorCardsGrid = ({ sensorData, handleSensorClick }) => {
             </div>
           </div>
 
-          {/* Body Sensor */}
+          {/* Body Sensor - Clickable Items */}
           <div className="p-5 sm:p-6 space-y-3 bg-gradient-to-b from-slate-900/40 to-slate-800/40 flex-1">
             {sensor.data.map((d, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between bg-slate-800/60 backdrop-blur-sm rounded-xl p-3.5 sm:p-4 border border-slate-700/50 group-hover:border-cyan-500/30 transition-colors"
+                onClick={(e) =>
+                  handleDetailClick(
+                    e,
+                    d.chartType,
+                    d.value,
+                    d.chartIcon,
+                    d.chartColor
+                  )
+                }
+                className="flex items-center justify-between bg-slate-800/60 backdrop-blur-sm rounded-xl p-3.5 sm:p-4 border border-slate-700/50 hover:border-cyan-500/50 transition-all cursor-pointer hover:bg-slate-800/80 hover:-translate-y-0.5 hover:shadow-lg group/item"
               >
                 <div className="flex items-center space-x-2">
                   <span className="text-lg sm:text-xl">{d.icon}</span>
@@ -104,18 +132,24 @@ const SensorCardsGrid = ({ sensorData, handleSensorClick }) => {
                     {d.label}
                   </span>
                 </div>
-                <span className="text-lg sm:text-xl font-bold text-white">
-                  {d.value}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-lg sm:text-xl font-bold text-white">
+                    {d.value}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-cyan-400 opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Footer */}
-          <div className="px-5 sm:px-6 pb-4 sm:pb-5 bg-gradient-to-b from-slate-800/40 to-slate-900/60">
+          {/* Footer - Lihat Penjelasan Sensor (Navigate to Detail Page) */}
+          <div 
+            onClick={() => handleSensorClick(sensor.type)}
+            className="px-5 sm:px-6 pb-4 sm:pb-5 bg-gradient-to-b from-slate-800/40 to-slate-900/60 cursor-pointer"
+          >
             <div className="flex items-center justify-center space-x-2 text-cyan-400 transition-all duration-300 group-hover:text-cyan-300">
               <span className="text-xs sm:text-sm font-semibold tracking-wide">
-                Lihat Detail
+                Lihat Penjelasan Sensor
               </span>
               <ChevronRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </div>
