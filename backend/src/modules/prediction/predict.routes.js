@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import {
   getPrediction,
   getPredictedRange,
@@ -12,16 +13,16 @@ const router = Router();
 // 1. Prediksi 24 jam
 router.get("/prediction/:type", getPrediction);
 
-// 2. Prediksi custom range (jam/durasi)
+// 2. Prediksi custom range
 router.get("/prediction-range/:type", getPredictedRange);
 
-// 3. Prediksi untuk hari ini (00:00 – 23:59)
+// 3. Prediksi hari ini
 router.get("/prediction-today/:type", getPredictionToday);
 
-// 4. Prediksi untuk 7 hari ke depan
+// 4. Prediksi 7 hari
 router.get("/prediction-7days/:type", getPrediction7Days);
 
-// 5. Riwayat prediction (dari database)
+// 5. Riwayat prediksi dari DB
 router.get("/prediction-history/:type", getPredictionHistory);
 
 export default router;

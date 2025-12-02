@@ -1,7 +1,10 @@
 import express from "express";
 import cors from "cors";
+
 import sensorRoutes from "./modules/sensor/sensor.routes.js";
 import predictionRoutes from "./modules/prediction/predict.routes.js";
+import historyRoutes from "./modules/history/history.routes.js";
+
 import { notFound } from "./middleware/notFound.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
@@ -17,9 +20,10 @@ app.use(
 
 app.use(express.json());
 
-// Routes
+// ROUTES
 app.use("/api/sensor", sensorRoutes);
 app.use("/ai", predictionRoutes);
+app.use("/api/history", historyRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
