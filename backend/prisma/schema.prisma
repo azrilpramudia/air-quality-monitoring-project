@@ -22,13 +22,11 @@ model Prediction {
   id           Int      @id @default(autoincrement())
   createdAt    DateTime @default(now())
   timestamp    DateTime
-
   temp_c       Float
   rh_pct       Float
   tvoc_ppb     Float
   eco2_ppm     Float
   dust_ugm3    Float
-
   featuresJson Json
   forecastJson Json
 }
