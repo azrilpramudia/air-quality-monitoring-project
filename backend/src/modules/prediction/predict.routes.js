@@ -13,6 +13,6 @@ router.post("/", predictAQ);
 router.post("/manual", manualPredict);
 router.post("/test-create", testCreatePrediction);
 router.get("/latest", getLatestPrediction);
-router.delete("/delete-all", deleteAllPredictions);
+router.delete("/delete-all", deleteAllPredictions); // DEV only
 
 export default router;

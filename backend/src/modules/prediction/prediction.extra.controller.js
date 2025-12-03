@@ -2,10 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-/**
- * GET /api/predict/latest
- * Return the newest prediction entry
- */
+// GET /api/predict/latest
 export async function getLatestPrediction(req, res, next) {
   try {
     const latest = await prisma.prediction.findFirst({
@@ -28,10 +25,7 @@ export async function getLatestPrediction(req, res, next) {
   }
 }
 
-/**
- * DELETE /api/predict/delete-all
- * Remove all prediction records (DEV only)
- */
+// DELETE /api/predict/delete-all (DEV only)
 export async function deleteAllPredictions(req, res, next) {
   try {
     const deleted = await prisma.prediction.deleteMany({});
