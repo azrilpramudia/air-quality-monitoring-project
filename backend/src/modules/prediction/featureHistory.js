@@ -11,9 +11,9 @@ export function updateHistory(current) {
   for (const key of Object.keys(history)) {
     const val = current[key];
     if (typeof val === "number" && !Number.isNaN(val)) {
-      history[key].unshift(val); // add as newest
+      history[key].unshift(val); // newest at index 0
       if (history[key].length > 2) {
-        history[key].pop(); // keep only 2 lags
+        history[key].pop(); // keep only lag1, lag2
       }
     }
   }

@@ -1,10 +1,8 @@
-// src/modules/history/history.routes.js
 import { Router } from "express";
-import { getHistory } from "./history.controller.js";
+import { getPredictionHistory } from "./predictionHistory.controller.js";
 
 const router = Router();
 
-// GET /api/history/:type
-router.get("/:type", getHistory);
+router.get("/prediction", getPredictionHistory);
 
 export default router;

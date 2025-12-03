@@ -2,9 +2,12 @@ import { getHistory } from "./featureHistory.js";
 
 function getTimeFeatures(timestamp) {
   const date = timestamp ? new Date(timestamp) : new Date();
-  const hour = date.getHours() + date.getMinutes() / 60; // smoother
+
+  // use hour + fraction of hour (minute/60)
+  const hour = date.getHours() + date.getMinutes() / 60;
   const sin_day = Math.sin((2 * Math.PI * hour) / 24);
   const cos_day = Math.cos((2 * Math.PI * hour) / 24);
+
   return { sin_day, cos_day };
 }
 
@@ -12,20 +15,20 @@ export function buildFeatures(current) {
   const h = getHistory();
   const { sin_day, cos_day } = getTimeFeatures(current.timestamp);
 
-  const safe = (arr, fallback) =>
-    arr.length > 0 && typeof arr[0] === "number" ? arr[0] : fallback;
-
-  const safe2 = (arr, fallback) =>
-    arr.length > 1 && typeof arr[1] === "number" ? arr[1] : fallback;
-
   const temp = current.temp_c;
   const rh = current.rh_pct;
   const tvoc = current.tvoc_ppb;
   const eco2 = current.eco2_ppm;
   const dust = current.dust_ugm3;
 
+  const safe = (arr, fallback) =>
+    arr.length > 0 && typeof arr[0] === "number" ? arr[0] : fallback;
+
+  const safe2 = (arr, fallback) =>
+    arr.length > 1 && typeof arr[1] === "number" ? arr[1] : fallback;
+
   return [
-    // 5 current values
+    // current values
     temp,
     rh,
     tvoc,

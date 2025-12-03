@@ -2,28 +2,29 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 /**
- * predictionData:
+ * params:
  * {
- *   timestamp,
+ *   timestamp: Date | string | number,
  *   sensors: { temp_c, rh_pct, tvoc_ppb, eco2_ppm, dust_ugm3 },
  *   features: number[],
  *   prediction: number[],
  *   target_cols: string[]
  * }
  */
-export async function savePrediction(predictionData) {
-  const { timestamp, sensors, features, prediction, target_cols } =
-    predictionData;
+export async function savePrediction(params) {
+  const { timestamp, sensors, features, prediction, target_cols } = params;
 
-  // Map outputs into an object: { "y_temp+1": value, ... }
+  const ts = timestamp ? new Date(timestamp) : new Date();
+
+  // Map outputs into { "y_temp+1": value, ... }
   const forecast = {};
-  target_cols.forEach((name, i) => {
-    forecast[name] = prediction[i];
+  target_cols.forEach((name, idx) => {
+    forecast[name] = prediction[idx];
   });
 
   return prisma.prediction.create({
     data: {
-      timestamp: new Date(timestamp || Date.now()),
+      timestamp: ts,
       temp_c: sensors.temp_c,
       rh_pct: sensors.rh_pct,
       tvoc_ppb: sensors.tvoc_ppb,
