@@ -1,9 +1,10 @@
-import express from "express";
+import { Router } from "express";
 import { predictAQ } from "./predict.controller.js";
+import { manualPredict } from "./manualPredict.controller.js";
 
-const router = express.Router();
+const router = Router();
 
-// POST /api/predict
-router.post("/", predictAQ);
+router.post("/", predictAQ); // existing
+router.post("/manual", manualPredict); // new
 
 export default router;
