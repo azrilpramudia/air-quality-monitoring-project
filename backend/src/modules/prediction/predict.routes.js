@@ -2,6 +2,7 @@ import { Router } from "express";
 import { predictAQ } from "./predict.controller.js";
 import { manualPredict } from "./manualPredict.controller.js";
 import { testCreatePrediction } from "./prediction.test.controller.js";
+import { getPredictionChart } from "./prediction.chart.controller.js";
 import {
   getLatestPrediction,
   deleteAllPredictions,
@@ -11,6 +12,7 @@ const router = Router();
 
 router.post("/", predictAQ);
 router.post("/manual", manualPredict);
+router.get("/chart/:type", getPredictionChart);
 router.post("/test-create", testCreatePrediction);
 router.get("/latest", getLatestPrediction);
 router.delete("/delete-all", deleteAllPredictions); // DEV only

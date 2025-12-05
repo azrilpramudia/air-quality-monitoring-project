@@ -5,7 +5,7 @@ import { requestMLPrediction } from "./predict.service.js";
 import { savePrediction } from "./prediction.repository.js";
 import { broadcastWS } from "../../websocket/wsServer.js";
 
-// simple helper
+// Ensure number conversion safe
 const safeNum = (v) =>
   typeof v === "number"
     ? v
@@ -28,47 +28,42 @@ export function initPredictionMQTTWorker() {
         return;
       }
 
-      // You can filter by topic if needed
-      // if (topic !== process.env.MQTT_TOPIC) return;
-
       const sensors = {
         temp_c: safeNum(data.temp_c),
         rh_pct: safeNum(data.rh_pct),
         tvoc_ppb: safeNum(data.tvoc_ppb),
         eco2_ppm: safeNum(data.eco2_ppm),
         dust_ugm3: safeNum(data.dust_ugm3),
-        timestamp: data.ts || data.timestamp || Date.now(),
+        timestamp: data.ts || Date.now(),
       };
 
-      // 1) Build 17 features using *previous* history
-      const features = buildFeatures(sensors);
-
-      // 2) Update history with current reading
+      // 1) Update history first
       updateHistory(sensors);
 
-      // 3) Call Python ML model
-      const mlRes = await requestMLPrediction(features);
-      const { prediction, target_cols } = mlRes;
+      // 2) Build features
+      const features = buildFeatures(sensors);
 
-      // 4) Save to DB
+      // 3) Ask ML model
+      const mlRes = await requestMLPrediction(features);
+
+      let preds = mlRes.prediction;
+      if (Array.isArray(preds[0])) preds = preds[0]; // flatten multi-output
+
+      const target_cols = mlRes.target_cols;
+
+      // 4) Save everything to DB
       const saved = await savePrediction({
         timestamp: sensors.timestamp,
         sensors,
         features,
-        prediction,
+        prediction: preds,
         target_cols,
       });
 
-      // 5) Broadcast via WebSocket
+      // 5) Broadcast real-time prediction to frontend
       broadcastWS({
         type: "prediction_update",
-        data: {
-          id: saved.id,
-          timestamp: saved.timestamp,
-          sensors,
-          target_cols,
-          prediction,
-        },
+        data: saved,
       });
 
       console.log("✅ [PRED] Saved & broadcast prediction id:", saved.id);
