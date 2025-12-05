@@ -24,10 +24,10 @@ try:
         features = saved["features"]        # LIST OF INPUT FEATURES
         target_cols = saved["target_cols"]  # LIST OF OUTPUT COLUMNS
 
-        print("Extracted trained model from dict.")
-        print("FEATURE LIST:", features)
-        print("NUMBER OF FEATURES:", len(features))
-        print("TARGET COLS:", target_cols)
+        # print("Extracted trained model from dict.")
+        # print("FEATURE LIST:", features)
+        # print("NUMBER OF FEATURES:", len(features))
+        # print("TARGET COLS:", target_cols)
 
     else:
         model = saved
