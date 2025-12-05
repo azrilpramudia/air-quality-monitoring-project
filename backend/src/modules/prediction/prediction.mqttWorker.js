@@ -5,7 +5,6 @@ import { requestMLPrediction } from "./predict.service.js";
 import { savePrediction } from "./prediction.repository.js";
 import { broadcastWS } from "../../websocket/wsServer.js";
 
-// Ensure number conversion safe
 const safeNum = (v) =>
   typeof v === "number"
     ? v
@@ -20,38 +19,42 @@ export function initPredictionMQTTWorker() {
     try {
       const raw = msg.toString();
 
+      // Validate JSON
       let data;
       try {
         data = JSON.parse(raw);
       } catch {
-        console.error("❌ [PRED] Invalid JSON from MQTT:", raw);
+        console.error("❌ [PRED] Invalid JSON:", raw);
         return;
       }
 
+      // Convert sensor values
       const sensors = {
         temp_c: safeNum(data.temp_c),
         rh_pct: safeNum(data.rh_pct),
         tvoc_ppb: safeNum(data.tvoc_ppb),
         eco2_ppm: safeNum(data.eco2_ppm),
         dust_ugm3: safeNum(data.dust_ugm3),
-        timestamp: data.ts || Date.now(),
+        timestamp: Number(data.ts) || Date.now(),
       };
 
-      // 1) Update history first
+      // 1) Update history BEFORE building lags
       updateHistory(sensors);
 
-      // 2) Build features
+      // 2) Build 17 features
       const features = buildFeatures(sensors);
 
-      // 3) Ask ML model
+      // 3) Request ML prediction
       const mlRes = await requestMLPrediction(features);
 
-      let preds = mlRes.prediction;
-      if (Array.isArray(preds[0])) preds = preds[0]; // flatten multi-output
+      // Proper flattening
+      const preds = Array.isArray(mlRes.prediction?.[0])
+        ? mlRes.prediction[0]
+        : mlRes.prediction;
 
       const target_cols = mlRes.target_cols;
 
-      // 4) Save everything to DB
+      // 4) Save to DB
       const saved = await savePrediction({
         timestamp: sensors.timestamp,
         sensors,
@@ -60,10 +63,15 @@ export function initPredictionMQTTWorker() {
         target_cols,
       });
 
-      // 5) Broadcast real-time prediction to frontend
+      // 5) Realtime broadcast
       broadcastWS({
         type: "prediction_update",
-        data: saved,
+        data: {
+          id: saved.id,
+          timestamp: saved.timestamp,
+          prediction: preds,
+          target_cols,
+        },
       });
 
       console.log("✅ [PRED] Saved & broadcast prediction id:", saved.id);
