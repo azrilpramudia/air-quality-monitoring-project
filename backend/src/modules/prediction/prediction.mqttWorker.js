@@ -1,9 +1,9 @@
 import mqttClient from "../../mqtt/mqttClient.js";
 import { updateHistory } from "./featureHistory.js";
 import { buildFeatures } from "./featureBuilder.js";
-import { requestMLPrediction } from "./predict.service.js";
 import { savePrediction } from "./prediction.repository.js";
 import { broadcastWS } from "../../websocket/wsServer.js";
+import { requestMLPrediction, mlOnline } from "./predict.service.js";
 
 const safeNum = (v) =>
   typeof v === "number"
@@ -19,7 +19,9 @@ export function initPredictionMQTTWorker() {
     try {
       const raw = msg.toString();
 
-      // Validate JSON
+      // -----------------------------
+      // 1) Validate MQTT JSON
+      // -----------------------------
       let data;
       try {
         data = JSON.parse(raw);
@@ -28,7 +30,9 @@ export function initPredictionMQTTWorker() {
         return;
       }
 
-      // Convert sensor values
+      // -----------------------------
+      // 2) Normalize sensors
+      // -----------------------------
       const sensors = {
         temp_c: safeNum(data.temp_c),
         rh_pct: safeNum(data.rh_pct),
@@ -38,23 +42,34 @@ export function initPredictionMQTTWorker() {
         timestamp: Number(data.ts) || Date.now(),
       };
 
-      // 1) Update history BEFORE building lags
+      // -----------------------------
+      // 3) Build features
+      // -----------------------------
       updateHistory(sensors);
-
-      // 2) Build 17 features
       const features = buildFeatures(sensors);
 
-      // 3) Request ML prediction
+      // -----------------------------
+      // 4) ML OFFLINE → skip prediction
+      // -----------------------------
+      if (!mlOnline) {
+        console.log("⚠️ ML offline — prediction skipped");
+        return; // ❗ exit only THIS MQTT event
+      }
+
+      // -----------------------------
+      // 5) Call ML service
+      // -----------------------------
       const mlRes = await requestMLPrediction(features);
 
-      // Proper flattening
       const preds = Array.isArray(mlRes.prediction?.[0])
         ? mlRes.prediction[0]
         : mlRes.prediction;
 
       const target_cols = mlRes.target_cols;
 
-      // 4) Save to DB
+      // -----------------------------
+      // 6) Save to Database
+      // -----------------------------
       const saved = await savePrediction({
         timestamp: sensors.timestamp,
         sensors,
@@ -63,7 +78,9 @@ export function initPredictionMQTTWorker() {
         target_cols,
       });
 
-      // 5) Realtime broadcast
+      // -----------------------------
+      // 7) Real-time broadcast
+      // -----------------------------
       broadcastWS({
         type: "prediction_update",
         data: {

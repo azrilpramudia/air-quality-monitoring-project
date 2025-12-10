@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { mlOnline } from "./predict.service.js";
 const prisma = new PrismaClient();
 
 function formatTime(ts) {
@@ -8,7 +9,7 @@ function formatTime(ts) {
 
 export async function getPredictionChart(req, res, next) {
   try {
-    const { type } = req.params; // "temperature" | "tvoc"
+    const { type } = req.params; // temperature | tvoc
 
     // 1. Historical ACTUAL data
     const sensorRows = await prisma.sensordata.findMany({
@@ -22,22 +23,23 @@ export async function getPredictionChart(req, res, next) {
       type: "actual",
     }));
 
-    // 2. Latest prediction
+    // 2. Latest prediction (may be null)
     const latest = await prisma.prediction.findFirst({
       orderBy: { id: "desc" },
     });
 
     let predicted = [];
 
-    if (latest) {
+    if (latest && latest.forecastJson) {
       const forecast = latest.forecastJson;
 
-      const pairs = Object.entries(forecast).filter(([key]) =>
-        type === "temperature" ? key.includes("temp") : key.includes("tvoc")
-      );
+      const pairs = Object.entries(forecast).filter(([key]) => {
+        const k = key.toLowerCase();
+        return type === "temperature" ? k.includes("temp") : k.includes("tvoc");
+      });
 
-      predicted = pairs.map(([key, val], index) => ({
-        time: `+${index + 1}`,
+      predicted = pairs.map(([key, val], i) => ({
+        time: `+${i + 1}`,
         value: val,
         type: "predicted",
       }));
@@ -48,6 +50,16 @@ export async function getPredictionChart(req, res, next) {
       data: [...actual, ...predicted],
     });
   } catch (err) {
-    next(err);
+    console.error("Chart error:", err);
+    return res.json({
+      success: false,
+      data: [],
+      error: err.message,
+    });
   }
+  return res.json({
+    success: true,
+    mlOnline,
+    data: [...actual, ...predicted],
+  });
 }

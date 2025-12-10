@@ -5,13 +5,6 @@ import { Wind, Droplets, Gauge, Activity } from "lucide-react";
 import { useRealtimeContext } from "../../context/RealtimeContext";
 
 const Navbar = () => {
-  const [activeTime, setActiveTime] = useState(
-    new Date().toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    })
-  );
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
   const [wasConnected, setWasConnected] = useState(false);
@@ -24,20 +17,6 @@ const Navbar = () => {
     else if (isConnected) setIsReconnecting(false);
     setWasConnected(isConnected);
   }, [isConnected]);
-
-  // 🕒 Update waktu tiap detik
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveTime(
-        new Date().toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-      );
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   // 📜 Scroll progress bar
   useEffect(() => {
@@ -159,24 +138,6 @@ const Navbar = () => {
                 : "Disconnected"}
             </span>
           </div>
-
-          <span className="hidden sm:block w-px h-4 bg-cyan-300/15" />
-
-          {/* LIVE indicator */}
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40 animate-ping" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
-          </span>
-          <span className="hidden sm:inline text-emerald-300 font-semibold tracking-wider">
-            LIVE
-          </span>
-
-          <span className="hidden sm:block w-px h-4 bg-cyan-300/15" />
-
-          {/* Time Active */}
-          <time className="font-mono text-[11px] sm:text-[12px] bg-gradient-to-r from-cyan-200 to-blue-200 bg-clip-text text-transparent font-semibold">
-            {activeTime}
-          </time>
         </div>
       </div>
 
