@@ -55,7 +55,9 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
     pendingRef.current = true;
 
     try {
-      const res = await fetch(`http://localhost:5000/ai/prediction/${type}`);
+      const res = await fetch(
+        `http://localhost:5000/api/predict/chart/${type}`
+      );
       const json = await res.json();
 
       if (json?.data) {

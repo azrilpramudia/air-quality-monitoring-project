@@ -10,9 +10,8 @@ function formatTime(ts) {
 
 export async function getPredictionChart(req, res, next) {
   try {
-    const { type } = req.params; // temperature | tvoc
+    const { type } = req.params;
 
-    // 1. Get historical actual sensor data
     const sensorRows = await prisma.sensordata.findMany({
       orderBy: { id: "desc" },
       take: 48,
@@ -24,7 +23,6 @@ export async function getPredictionChart(req, res, next) {
       type: "actual",
     }));
 
-    // 2. Latest prediction (may be null)
     const latest = await prisma.prediction.findFirst({
       orderBy: { id: "desc" },
     });
@@ -46,7 +44,6 @@ export async function getPredictionChart(req, res, next) {
       }));
     }
 
-    // 👇 ML STATUS INCLUDED HERE
     return res.json({
       success: true,
       mlOnline,
