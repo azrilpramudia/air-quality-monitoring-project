@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useRef } from "react";
 import {
@@ -306,12 +307,50 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
 };
 
 const PredictionCharts = () => {
+  const [mlOnline, setMlOnline] = useState(null); // null = unknown, true/false = known
+
+  // Fetch ML status once
+  const fetchMLStatus = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:5000/ai/prediction/temperature"
+      );
+      const json = await res.json();
+      setMlOnline(json?.mlOnline);
+    } catch (err) {
+      setMlOnline(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMLStatus();
+    const interval = setInterval(fetchMLStatus, 4000); // update every 4s
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div
       className="glass-effect rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl animate-slide-in mb-8"
       style={{ animationDelay: "0.35s" }}
     >
-      {/* Header Section dengan spacing yang lebih baik */}
+      {/* ===== ML STATUS BADGE ===== */}
+      <div className="flex justify-center mb-4">
+        {mlOnline === null ? (
+          <span className="px-4 py-1 text-xs rounded-full bg-slate-700 text-slate-300">
+            Checking ML service...
+          </span>
+        ) : mlOnline ? (
+          <span className="px-4 py-1 text-xs rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+            🟢 AI Prediction Online
+          </span>
+        ) : (
+          <span className="px-4 py-1 text-xs rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+            🔴 AI Prediction Offline
+          </span>
+        )}
+      </div>
+
+      {/* Header Section */}
       <div className="text-center mb-8">
         <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
           Prediksi Kualitas Udara
@@ -322,7 +361,7 @@ const PredictionCharts = () => {
         </p>
       </div>
 
-      {/* Charts Grid dengan spacing yang konsisten */}
+      {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <PredictionChart
           type="temperature"

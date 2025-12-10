@@ -109,11 +109,8 @@ const SensorDetail = ({ sensorType, onBack }) => {
                   {info.fullName}
                 </p>
               </div>
-              
             </div>
           </div>
-
-         
 
           {/* Sensor Description Section */}
           <motion.section
