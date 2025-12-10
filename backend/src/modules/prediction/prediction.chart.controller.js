@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { mlOnline } from "./predict.service.js";
+
 const prisma = new PrismaClient();
 
 function formatTime(ts) {
@@ -11,7 +12,7 @@ export async function getPredictionChart(req, res, next) {
   try {
     const { type } = req.params; // temperature | tvoc
 
-    // 1. Historical ACTUAL data
+    // 1. Get historical actual sensor data
     const sensorRows = await prisma.sensordata.findMany({
       orderBy: { id: "desc" },
       take: 48,
@@ -30,7 +31,7 @@ export async function getPredictionChart(req, res, next) {
 
     let predicted = [];
 
-    if (latest && latest.forecastJson) {
+    if (latest?.forecastJson) {
       const forecast = latest.forecastJson;
 
       const pairs = Object.entries(forecast).filter(([key]) => {
@@ -45,21 +46,19 @@ export async function getPredictionChart(req, res, next) {
       }));
     }
 
+    // 👇 ML STATUS INCLUDED HERE
     return res.json({
       success: true,
+      mlOnline,
       data: [...actual, ...predicted],
     });
   } catch (err) {
     console.error("Chart error:", err);
     return res.json({
       success: false,
+      mlOnline: false,
       data: [],
       error: err.message,
     });
   }
-  return res.json({
-    success: true,
-    mlOnline,
-    data: [...actual, ...predicted],
-  });
 }
