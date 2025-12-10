@@ -99,10 +99,6 @@ const SensorCardsGrid = ({ sensorData, onOpenChart, handleSensorClick }) => {
                     {sensor.title}
                   </h4>
                 </div>
-                <div className="flex items-center space-x-1 bg-white/20 backdrop-blur-sm px-2.5 sm:px-3 py-1 rounded-full border border-white/30">
-                  <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
-                  <span className="text-xs font-bold">LIVE</span>
-                </div>
               </div>
               <p className="text-xs sm:text-sm text-white/90 font-medium">
                 {sensor.desc}
@@ -143,7 +139,7 @@ const SensorCardsGrid = ({ sensorData, onOpenChart, handleSensorClick }) => {
           </div>
 
           {/* Footer - Lihat Penjelasan Sensor (Navigate to Detail Page) */}
-          <div 
+          <div
             onClick={() => handleSensorClick(sensor.type)}
             className="px-5 sm:px-6 pb-4 sm:pb-5 bg-gradient-to-b from-slate-800/40 to-slate-900/60 cursor-pointer"
           >

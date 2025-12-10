@@ -299,11 +299,6 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
               <span className="text-slate-400 font-medium">Prediksi AI</span>
             </div>
           </div>
-
-          <div className="flex items-center gap-1.5 text-slate-500">
-            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-            <span className="font-medium">Live</span>
-          </div>
         </div>
       </div>
     </div>
@@ -312,7 +307,7 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
 
 const PredictionCharts = () => {
   return (
-    <div 
+    <div
       className="glass-effect rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl animate-slide-in mb-8"
       style={{ animationDelay: "0.35s" }}
     >
@@ -322,7 +317,8 @@ const PredictionCharts = () => {
           Prediksi Kualitas Udara
         </h2>
         <p className="text-slate-400 text-xs sm:text-sm px-4">
-          Analisis prediktif berbasis AI untuk membantu Anda merencanakan aktivitas berdasarkan kondisi udara masa depan
+          Analisis prediktif berbasis AI untuk membantu Anda merencanakan
+          aktivitas berdasarkan kondisi udara masa depan
         </p>
       </div>
 
