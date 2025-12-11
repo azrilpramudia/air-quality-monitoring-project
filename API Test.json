@@ -107,27 +107,6 @@
 					"response": []
 				},
 				{
-					"name": "history-predict",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://localhost:5000/api/history/prediction",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "5000",
-							"path": [
-								"api",
-								"history",
-								"prediction"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "predict-manual",
 					"request": {
 						"method": "POST",
@@ -235,15 +214,15 @@
 			"name": "history",
 			"item": [
 				{
-					"name": "history 24 hours",
+					"name": "24 Hours",
 					"item": [
 						{
-							"name": "temperature",
+							"name": "history-humidity",
 							"request": {
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "http://localhost:5000/api/history/temperature?hours=24",
+									"raw": "http://localhost:5000/api/history/humidity?hours=168",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -252,12 +231,12 @@
 									"path": [
 										"api",
 										"history",
-										"temperature"
+										"humidity"
 									],
 									"query": [
 										{
 											"key": "hours",
-											"value": "24"
+											"value": "168"
 										}
 									]
 								}
@@ -265,7 +244,7 @@
 							"response": []
 						},
 						{
-							"name": "humidity",
+							"name": "history-hum",
 							"request": {
 								"method": "GET",
 								"header": [],
@@ -292,7 +271,7 @@
 							"response": []
 						},
 						{
-							"name": "tvoc",
+							"name": "history-tvoc",
 							"request": {
 								"method": "GET",
 								"header": [],
@@ -321,10 +300,37 @@
 					]
 				},
 				{
-					"name": "history 7 day",
+					"name": "7-days",
 					"item": [
 						{
-							"name": "temperature",
+							"name": "history-humidity",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:5000/api/history/humidity?hours=168",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"api",
+										"history",
+										"humidity"
+									],
+									"query": [
+										{
+											"key": "hours",
+											"value": "168"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "history-temp",
 							"request": {
 								"method": "GET",
 								"header": [],
@@ -349,19 +355,14 @@
 								}
 							},
 							"response": []
-						}
-					]
-				},
-				{
-					"name": "default history",
-					"item": [
+						},
 						{
-							"name": "eco2",
+							"name": "history-tvoc",
 							"request": {
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "http://localhost:5000/api/history/eco2",
+									"raw": "http://localhost:5000/api/history/tvoc?hours=168",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -370,13 +371,126 @@
 									"path": [
 										"api",
 										"history",
-										"eco2"
+										"tvoc"
+									],
+									"query": [
+										{
+											"key": "hours",
+											"value": "168"
+										}
 									]
 								}
 							},
 							"response": []
 						}
 					]
+				},
+				{
+					"name": "30-days",
+					"item": [
+						{
+							"name": "history-temp",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:5000/api/history/temperature?hours=720",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"api",
+										"history",
+										"temperature"
+									],
+									"query": [
+										{
+											"key": "hours",
+											"value": "720"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "history-hum",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:5000/api/history/humidity?hours=720",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"api",
+										"history",
+										"humidity"
+									],
+									"query": [
+										{
+											"key": "hours",
+											"value": "720"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "history-tvoc",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:5000/api/history/tvoc?hours=720",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"api",
+										"history",
+										"tvoc"
+									],
+									"query": [
+										{
+											"key": "hours",
+											"value": "720"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "history-predict",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5000/api/history/prediction",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"api",
+								"history",
+								"prediction"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -398,6 +512,27 @@
 							"path": [
 								"api",
 								"sensor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete-sensor (dev only)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5000/api/sensor/delete-all",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"api",
+								"sensor",
+								"delete-all"
 							]
 						}
 					},
