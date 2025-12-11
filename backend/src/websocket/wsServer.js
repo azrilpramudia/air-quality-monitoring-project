@@ -7,7 +7,11 @@ export const initWebSocket = () => {
   console.log("🔥 WebSocket Server running on ws://localhost:4001");
 
   wss.on("connection", (ws) => {
-    console.log("⚡ Client Connected");
+    // Log only number of active WS clients, not each connection
+    console.log(`⚡ WebSocket clients connected: ${wss.clients.size}`);
+
+    // Mark this client as logged so no duplicate logs
+    ws._logged = true;
 
     ws.send(
       JSON.stringify({
@@ -15,6 +19,10 @@ export const initWebSocket = () => {
         message: "WebSocket is ready",
       })
     );
+
+    ws.on("close", () => {
+      console.log(`🔌 Client disconnected — Active: ${wss.clients.size}`);
+    });
   });
 };
 

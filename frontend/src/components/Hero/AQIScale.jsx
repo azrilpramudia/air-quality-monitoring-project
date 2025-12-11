@@ -6,35 +6,30 @@ const AQIScale = ({ onClick }) => {
       level: 1,
       emoji: "😊",
       label: "Baik",
-      desc: "Udara bersih dan sehat",
       color: "from-green-400 to-emerald-500",
     },
     {
       level: 2,
       emoji: "🙂",
       label: "Sedang",
-      desc: "Masih dapat diterima",
       color: "from-yellow-400 to-amber-500",
     },
     {
       level: 3,
       emoji: "😐",
       label: "Tidak Sehat",
-      desc: "Kurang baik untuk sensitif",
       color: "from-orange-400 to-orange-500",
     },
     {
       level: 4,
       emoji: "😷",
       label: "Sangat Tidak Sehat",
-      desc: "Berisiko bagi semua",
       color: "from-red-500 to-rose-600",
     },
     {
       level: 5,
       emoji: "⚠️",
       label: "Berbahaya",
-      desc: "Darurat kesehatan",
       color: "from-purple-500 to-fuchsia-600",
     },
   ];
@@ -69,9 +64,6 @@ const AQIScale = ({ onClick }) => {
               </div>
               <p className="text-sm sm:text-base font-bold mb-1">
                 {item.label}
-              </p>
-              <p className="text-xs text-white/90 leading-relaxed">
-                {item.desc}
               </p>
               <div className="flex items-center justify-center space-x-1 text-xs mt-2 opacity-0 group-hover:opacity-100 transition-all duration-300 text-cyan-400 group-hover:text-cyan-300">
                 <TrendingUp className="h-3 w-3" />
