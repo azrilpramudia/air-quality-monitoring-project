@@ -12,6 +12,9 @@ const safeNum = (v) =>
     ? Number(v)
     : 0;
 
+// Prevent offline log spam
+let mlWarned = false;
+
 export function initPredictionMQTTWorker() {
   console.log("🧠 Prediction MQTT worker initialized.");
 
@@ -43,22 +46,27 @@ export function initPredictionMQTTWorker() {
       };
 
       // -----------------------------
-      // 3) Build ML features
+      // 3) Prepare ML features
       // -----------------------------
       updateHistory(sensors);
       const features = buildFeatures(sensors);
 
       // -----------------------------
-      // 4) ML OFFLINE → skip prediction
+      // 4) ML OFFLINE → skip prediction (NO SPAM)
       // -----------------------------
       if (!mlOnline) {
-        // Only warn ONCE from backend, frontend badge already updates
-        console.log("⚠️ ML offline — prediction skipped");
+        if (!mlWarned) {
+          console.log("⚠️ ML offline — prediction skipped");
+          mlWarned = true;
+        }
         return;
       }
 
+      // If ML back online → reset warning state
+      mlWarned = false;
+
       // -----------------------------
-      // 5) Request prediction from ML
+      // 5) Request ML prediction
       // -----------------------------
       const mlRes = await requestMLPrediction(features);
 
@@ -69,7 +77,7 @@ export function initPredictionMQTTWorker() {
       const target_cols = mlRes.target_cols;
 
       // -----------------------------
-      // 6) Save Prediction into DB
+      // 6) Save to DB
       // -----------------------------
       const saved = await savePrediction({
         timestamp: sensors.timestamp,

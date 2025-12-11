@@ -24,8 +24,15 @@ mqttClient.on("connect", () => {
   console.log("📡 MQTT Connected!");
 });
 
-mqttClient.on("message", async (topic, message) => {
+// IMPORTANT: include 'packet' argument
+mqttClient.on("message", async (topic, message, packet) => {
   try {
+    // 🚫 Ignore retained messages (ghost messages)
+    if (packet?.retain) {
+      console.log("⚠️ Ignored retained MQTT message");
+      return;
+    }
+
     const raw = message.toString();
 
     // 1. Parse JSON
