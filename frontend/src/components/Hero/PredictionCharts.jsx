@@ -325,11 +325,11 @@ const PredictionCharts = () => {
           </span>
         ) : mlOnline ? (
           <span className="px-4 py-1 text-xs rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
-            🟢 AI Prediction Online
+            AI Prediction Online
           </span>
         ) : (
           <span className="px-4 py-1 text-xs rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
-            🔴 AI Prediction Offline
+            AI Prediction Offline
           </span>
         )}
       </div>
