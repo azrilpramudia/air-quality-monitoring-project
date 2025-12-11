@@ -16,14 +16,54 @@
 
 ---
 
+## 📺 Live Dashboard Demo (Frontend)
+
+A modern web dashboard built with **React + WebSockets + MQTT** shows:
+
+- 📊 Real-time sensor charts  
+- 🧠 AI-powered prediction for Temperature & TVOC  
+- 🟢 Online/Offline device status  
+- 📥 Exportable historical data  
+- 🎨 Beautiful glassmorphism UI  
+
+### 🔗 Live Dashboard Preview
+
+https://your-live-dashboard-demo-link.com
+
+If running locally:
+
+http://localhost:5173
+
+## 🤖 AI Prediction System
+
+This project includes an **AI forecasting module** built with Python **FastAPI** and **XGBoost Multi-Output Regression**.
+
+### What AI Predicts
+
+- Temperature
+- TVOC (ppb)
+
+## Example Images
+![Preview](/media/images/)
+
+---
+
+### Workflow
+
+ESP32 → MQTT → Node.js Backend → ML Worker → FastAPI → Prediction → Dashboard
+
+---
+
 ## ⚙️ Features
 
-- 🔹 Real-time monitoring of air quality (AQI, TVOC, eCO₂)
-- 🌡️ Temperature and humidity measurement
-- 🌫️ Dust particle concentration detection (GP2Y1010AU0F)
-- 🖥️ Real-time display via TFT (ILI9431)
-- 🔄 Automatic periodic data refresh
-- 💾 Optional cloud integration (Firebase / MQTT / Web Dashboard)
+- 🔹 Real-time monitoring (AQI, TVOC, eCO₂, Temp, Humidity, Dust)
+- 🌡️ Live compensation between ENS160 & SHT31
+- 🖥️ Beautiful real-time TFT display
+- 🔄 Continuous auto-refresh
+- 🤖 AI prediction system
+- 📊 Historical trends & analytics
+- 📤 Excel export support
+- ☁️ (Optional) Cloud/MQTT dashboard
 
 ---
 
