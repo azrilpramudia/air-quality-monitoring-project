@@ -28,16 +28,12 @@ const CustomTooltip = ({ active, payload, unit }) => {
   return null;
 };
 
-const PredictionChart = ({ type, title, unit, color, icon }) => {
+const PredictionChart = ({ type, title, unit, color, icon, mlOnline }) => {
   const [rawData, setRawData] = useState([]);
   const scrollRef = useRef(null);
 
-  // ================================
-  // REAL-TIME SENSOR DATA ✔️
-  // ================================
   const { data: sensorData } = useRealtimeSensor();
 
-  // value realtime untuk type tertentu
   const liveValue =
     type === "temperature"
       ? sensorData?.temperature
@@ -45,9 +41,6 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
       ? sensorData?.tvoc
       : null;
 
-  // ================================
-  // FETCH PREDICTION (historical + predicted) ✔️
-  // ================================
   const pendingRef = useRef(false);
 
   const fetchPrediction = async () => {
@@ -61,7 +54,6 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
       const json = await res.json();
 
       if (json?.data) {
-        // kita simpan apa adanya: di dalamnya sudah ada type: "actual" | "predicted"
         setRawData(json.data);
       }
     } catch (err) {
@@ -73,59 +65,43 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
     }
   };
 
-  // Load awal
   useEffect(() => {
     fetchPrediction();
   }, [type]);
 
-  // ================================
-  // INJEK REAL-TIME KE GARIS ACTUAL ✔️
-  // setiap ada data baru dari sensor, tambahkan di ujung historical
-  // ================================
   useEffect(() => {
     if (liveValue == null) return;
 
     const timeLabel = new Date().toTimeString().slice(0, 5);
 
     setRawData((prev) => {
-      // pisahkan actual & predicted yang lama
       const historical = prev.filter((d) => d.type === "actual");
       const predicted = prev.filter((d) => d.type === "predicted");
 
-      // tambahkan titik actual terbaru (realtime)
       const updatedHistorical = [
         ...historical,
-        {
-          time: timeLabel,
-          value: liveValue,
-          type: "actual",
-        },
+        { time: timeLabel, value: liveValue, type: "actual" },
       ];
 
-      // batasi supaya tidak terlalu panjang (misal max 48 titik actual)
       const slicedHistorical = updatedHistorical.slice(-48);
 
       return [...slicedHistorical, ...predicted];
     });
   }, [liveValue, type]);
 
-  // ================================
-  // DATA UNTUK CHART
-  // ================================
   if (!rawData.length) return null;
 
   const historicalData = rawData.filter((d) => d.type === "actual");
-  const predictedData = rawData.filter((d) => d.type === "predicted");
+  let predictedData = rawData.filter((d) => d.type === "predicted");
 
-  // sambungkan garis actual -> predicted
-  if (historicalData.length > 0 && predictedData.length > 0) {
+  // sambungkan garis actual -> predicted (only if ML is ON)
+  if (mlOnline && historicalData.length > 0 && predictedData.length > 0) {
     const lastActual = historicalData[historicalData.length - 1];
     if (predictedData[0]?.time !== lastActual.time) {
       predictedData.unshift(lastActual);
     }
   }
 
-  // nilai besar di header:
   const currentValue =
     liveValue ??
     historicalData[historicalData.length - 1]?.value ??
@@ -244,7 +220,7 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
 
                 <Tooltip content={<CustomTooltip unit={unit} />} />
 
-                {/* DATA AKTUAL (historical + realtime) */}
+                {/* DATA AKTUAL */}
                 <Line
                   data={historicalData}
                   type="monotone"
@@ -255,17 +231,19 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
                   isAnimationActive={false}
                 />
 
-                {/* PREDICTION */}
-                <Line
-                  data={predictedData}
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#F59E0B"
-                  strokeWidth={3}
-                  strokeDasharray="8 4"
-                  dot={{ fill: "#F59E0B", r: 4, strokeWidth: 0 }}
-                  isAnimationActive={false}
-                />
+                {/* PREDICTION — ONLY IF ML ACTIVE */}
+                {mlOnline && predictedData.length > 0 && (
+                  <Line
+                    data={predictedData}
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#F59E0B"
+                    strokeWidth={3}
+                    strokeDasharray="8 4"
+                    dot={{ fill: "#F59E0B", r: 4, strokeWidth: 0 }}
+                    isAnimationActive={false}
+                  />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -287,20 +265,24 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
               />
               <span className="text-slate-400 font-medium">Data Aktual</span>
             </div>
-            <div className="flex items-center gap-2">
-              <svg width="32" height="4" viewBox="0 0 32 4">
-                <line
-                  x1="0"
-                  y1="2"
-                  x2="32"
-                  y2="2"
-                  stroke="#F59E0B"
-                  strokeWidth="2"
-                  strokeDasharray="6 3"
-                />
-              </svg>
-              <span className="text-slate-400 font-medium">Prediksi AI</span>
-            </div>
+
+            {/* LEGEND PREDIKSI — ONLY IF ML ACTIVE */}
+            {mlOnline && (
+              <div className="flex items-center gap-2">
+                <svg width="32" height="4" viewBox="0 0 32 4">
+                  <line
+                    x1="0"
+                    y1="2"
+                    x2="32"
+                    y2="2"
+                    stroke="#F59E0B"
+                    strokeWidth="2"
+                    strokeDasharray="6 3"
+                  />
+                </svg>
+                <span className="text-slate-400 font-medium">Prediksi AI</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -309,13 +291,13 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
 };
 
 const PredictionCharts = () => {
-  const [mlOnline, setMlOnline] = useState(null); // null = unknown, true/false = known
+  const [mlOnline, setMlOnline] = useState(null);
 
-  // Fetch ML status once
+  // 🔥 FIXED — VALID ML STATUS FETCHER
   const fetchMLStatus = async () => {
     try {
       const res = await fetch(
-        "http://localhost:5000/ai/prediction/temperature"
+        "http://localhost:5000/api/predict/chart/temperature"
       );
       const json = await res.json();
       setMlOnline(json?.mlOnline);
@@ -326,7 +308,7 @@ const PredictionCharts = () => {
 
   useEffect(() => {
     fetchMLStatus();
-    const interval = setInterval(fetchMLStatus, 4000); // update every 4s
+    const interval = setInterval(fetchMLStatus, 4000);
     return () => clearInterval(interval);
   }, []);
 
@@ -335,7 +317,7 @@ const PredictionCharts = () => {
       className="glass-effect rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl animate-slide-in mb-8"
       style={{ animationDelay: "0.35s" }}
     >
-      {/* ===== ML STATUS BADGE ===== */}
+      {/* ML STATUS BADGE */}
       <div className="flex justify-center mb-4">
         {mlOnline === null ? (
           <span className="px-4 py-1 text-xs rounded-full bg-slate-700 text-slate-300">
@@ -352,7 +334,7 @@ const PredictionCharts = () => {
         )}
       </div>
 
-      {/* Header Section */}
+      {/* Header */}
       <div className="text-center mb-8">
         <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
           Prediksi Kualitas Udara
@@ -363,7 +345,7 @@ const PredictionCharts = () => {
         </p>
       </div>
 
-      {/* Charts Grid */}
+      {/* CHARTS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <PredictionChart
           type="temperature"
@@ -371,13 +353,16 @@ const PredictionCharts = () => {
           unit="°C"
           color="#06B6D4"
           icon="🌡️"
+          mlOnline={mlOnline}
         />
+
         <PredictionChart
           type="tvoc"
           title="TVOC"
           unit="ppb"
           color="#06B6D4"
           icon="🌊"
+          mlOnline={mlOnline}
         />
       </div>
     </div>

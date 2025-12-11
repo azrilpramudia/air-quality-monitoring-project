@@ -43,7 +43,7 @@ export function initPredictionMQTTWorker() {
       };
 
       // -----------------------------
-      // 3) Build features
+      // 3) Build ML features
       // -----------------------------
       updateHistory(sensors);
       const features = buildFeatures(sensors);
@@ -52,12 +52,13 @@ export function initPredictionMQTTWorker() {
       // 4) ML OFFLINE → skip prediction
       // -----------------------------
       if (!mlOnline) {
+        // Only warn ONCE from backend, frontend badge already updates
         console.log("⚠️ ML offline — prediction skipped");
-        return; // ❗ exit only THIS MQTT event
+        return;
       }
 
       // -----------------------------
-      // 5) Call ML service
+      // 5) Request prediction from ML
       // -----------------------------
       const mlRes = await requestMLPrediction(features);
 
@@ -68,7 +69,7 @@ export function initPredictionMQTTWorker() {
       const target_cols = mlRes.target_cols;
 
       // -----------------------------
-      // 6) Save to Database
+      // 6) Save Prediction into DB
       // -----------------------------
       const saved = await savePrediction({
         timestamp: sensors.timestamp,

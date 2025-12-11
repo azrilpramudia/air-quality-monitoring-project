@@ -1,17 +1,18 @@
 import { WebSocketServer } from "ws";
 
 let wss = null;
+let hasLoggedConnection = false; // 🔥 Prevent repeated logs
 
 export const initWebSocket = () => {
   wss = new WebSocketServer({ port: 4001 });
   console.log("🔥 WebSocket Server running on ws://localhost:4001");
 
   wss.on("connection", (ws) => {
-    // Log only number of active WS clients, not each connection
-    console.log(`⚡ WebSocket clients connected: ${wss.clients.size}`);
-
-    // Mark this client as logged so no duplicate logs
-    ws._logged = true;
+    // Log only ONCE forever
+    if (!hasLoggedConnection) {
+      console.log("⚡ WebSocket Client Connected");
+      hasLoggedConnection = true;
+    }
 
     ws.send(
       JSON.stringify({
@@ -19,10 +20,6 @@ export const initWebSocket = () => {
         message: "WebSocket is ready",
       })
     );
-
-    ws.on("close", () => {
-      console.log(`🔌 Client disconnected — Active: ${wss.clients.size}`);
-    });
   });
 };
 
