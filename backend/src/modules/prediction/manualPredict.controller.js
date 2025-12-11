@@ -1,6 +1,6 @@
 import { buildFeatures } from "./featureBuilder.js";
 import { updateHistory } from "./featureHistory.js";
-import { requestMLPrediction } from "./predict.service.js";
+import { requestMLPrediction, mlOnline } from "./predict.service.js";
 
 export async function manualPredict(req, res, next) {
   try {
@@ -16,16 +16,18 @@ export async function manualPredict(req, res, next) {
       }
     }
 
-    // auto timestamp if missing
     sensors.timestamp = sensors.timestamp || Date.now();
 
-    // Build features using history
+    // Build features
     const features = buildFeatures(sensors);
-
-    // Update lag history AFTER building features
     updateHistory(sensors);
 
-    // Send to ML backend
+    // ⛔ If ML is offline → DO NOT skip manual test
+    if (!mlOnline) {
+      console.log("⚠️ ML offline — forcing manual prediction attempt...");
+    }
+
+    // Force call ML even if mlOnline=false
     const ml = await requestMLPrediction(features);
 
     return res.json({
@@ -35,6 +37,11 @@ export async function manualPredict(req, res, next) {
       target_cols: ml.target_cols,
     });
   } catch (err) {
-    next(err);
+    console.error("❌ Manual Predict Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "ML prediction failed.",
+      error: err.message,
+    });
   }
 }
