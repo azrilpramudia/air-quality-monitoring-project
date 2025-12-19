@@ -1,45 +1,11 @@
-// /* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { Wind, Droplets, Gauge, Activity } from "lucide-react";
-import { useRealtimeContext } from "../../context/RealtimeContext";
 
 const Navbar = () => {
-  const [activeTime, setActiveTime] = useState(
-    new Date().toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    })
-  );
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [wasConnected, setWasConnected] = useState(false);
-  const [isReconnecting, setIsReconnecting] = useState(false);
-  const { connected: isConnected } = useRealtimeContext();
 
-  // 🟡 Deteksi reconnecting
-  useEffect(() => {
-    if (wasConnected && !isConnected) setIsReconnecting(true);
-    else if (isConnected) setIsReconnecting(false);
-    setWasConnected(isConnected);
-  }, [isConnected]);
-
-  // 🕒 Update waktu tiap detik
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveTime(
-        new Date().toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-      );
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // 📜 Scroll progress bar
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY || document.documentElement.scrollTop;
@@ -54,166 +20,117 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // 🔝 Scroll to top
   const goTop = () => {
     if (window.location.hash !== "#top") window.location.hash = "#top";
     document
       .getElementById("hero-top")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      ?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // 🔍 Buka detail sensor
   const openSensorDetail = (key) => {
     window.location.hash = `#${key}`;
     document
       .getElementById("hero-root")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      ?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <nav
-      className={[
-        "sticky top-0 z-50 transition-all duration-300 backdrop-blur-xl font-poppins",
+    <div
+      className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-transparent bg-gradient-to-b from-[rgba(4,10,24,0.6)] to-[rgba(4,10,24,0.4)] ring-1 ring-cyan-300/10 shadow-lg backdrop-saturate-150"
-          : "bg-transparent bg-gradient-to-b from-[rgba(4,10,24,0.3)] to-[rgba(4,10,24,0.1)] ring-1 ring-cyan-300/5 shadow-md backdrop-saturate-150",
-      ].join(" ")}
-      aria-label="Global Navigation"
+          ? "bg-slate-900/95 backdrop-blur-md shadow-lg shadow-emerald-500/10 border-b border-emerald-500/20"
+          : "bg-transparent"
+      }`}
     >
-      {/* progress bar */}
+      {/* Progress bar */}
       <div
-        className="absolute top-0 left-0 h-[2px] bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-600 transition-all"
+        className="h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 transition-all duration-200"
         style={{ width: `${progress}%` }}
       />
 
-      <div
-        className={`max-w-7xl mx-auto flex flex-wrap md:flex-nowrap items-center justify-between gap-3 px-3 sm:px-4 ${
-          scrolled ? "py-2" : "py-3"
-        }`}
-      >
-        {/* Brand */}
-        <button
-          onClick={goTop}
-          className="group flex items-center gap-3 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-        >
-          <div className="grid place-items-center rounded-xl border h-9 w-9 sm:h-10 sm:w-10 bg-[#0E1A2B]/80 border-cyan-300/10 shadow-sm transition-transform duration-300 group-hover:scale-105">
-            <Wind className="h-5 w-5 text-cyan-300" />
-          </div>
-          <div className="text-left">
-            <h1 className="font-semibold tracking-tight leading-none bg-gradient-to-r from-white via-cyan-100 to-blue-200 bg-clip-text text-transparent text-[15px] sm:text-[17px] md:text-lg">
-              Air Quality Monitor
-            </h1>
-            <p className="text-[11px] sm:text-[12px] leading-tight text-cyan-100/70">
-              Real-time Environmental Data
-            </p>
-          </div>
-        </button>
+      {/* Brand */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <button
+            onClick={goTop}
+            className="flex items-center space-x-3 group cursor-pointer"
+          >
+            <div className="relative">
+              <Activity className="w-8 h-8 text-emerald-400 animate-pulse" />
+              <div className="absolute inset-0 bg-emerald-400 blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
+            </div>
+            <div className="hidden md:block text-left">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                Air Quality Monitor
+              </h1>
+              <p className="text-xs text-slate-400">
+                Real-time Environmental Data
+              </p>
+            </div>
+          </button>
 
-        {/* Desktop sensor pills */}
-        <div className="hidden lg:flex items-center gap-2">
-          <SensorPill
-            onClick={() => openSensorDetail("sht31")}
-            icon={<Droplets className="h-4 w-4" />}
-            label="SHT31"
-          />
-          <Dot />
-          <SensorPill
-            onClick={() => openSensorDetail("gp2y")}
-            icon={<Gauge className="h-4 w-4" />}
-            label="GP2Y"
-          />
-          <Dot />
-          <SensorPill
-            onClick={() => openSensorDetail("ens160")}
-            icon={<Activity className="h-4 w-4" />}
-            label="ENS160"
-          />
-        </div>
+          {/* Sensor shortcuts */}
+          <div className="hidden lg:flex items-center space-x-2">
+            <SensorPill
+              icon={<Droplets className="w-4 h-4" />}
+              label="SHT31"
+              onClick={() => openSensorDetail("sht31")}
+            />
+            <SensorPill
+              icon={<Wind className="w-4 h-4" />}
+              label="GP2Y"
+              onClick={() => openSensorDetail("gp2y")}
+            />
+            <SensorPill
+              icon={<Gauge className="w-4 h-4" />}
+              label="ENS160"
+              onClick={() => openSensorDetail("ens160")}
+            />
+          </div>
 
-        {/* Status */}
-        <div className="flex items-center flex-wrap justify-end gap-2 sm:gap-3 rounded-xl border border-cyan-300/10 bg-[#0B1628]/70 px-2.5 sm:px-3 py-1.5 sm:py-2 shadow-sm text-[11px] sm:text-[12px] font-medium">
-          {/* MQTT status */}
-          <div className="flex items-center gap-1">
-            <div
-              className={`w-2.5 h-2.5 rounded-full ${
-                isConnected
-                  ? "bg-green-400 animate-pulse"
-                  : isReconnecting
-                  ? "bg-yellow-400 animate-pulse"
-                  : "bg-red-500 animate-ping"
-              }`}
-            ></div>
-            <span
-              className={`font-semibold ${
-                isConnected
-                  ? "text-emerald-300"
-                  : isReconnecting
-                  ? "text-yellow-300"
-                  : "text-red-400"
-              }`}
-            >
-              {isConnected
-                ? "Connected"
-                : isReconnecting
-                ? "Reconnecting..."
-                : "Disconnected"}
+          {/* Minimal Status */}
+          <div className="hidden md:flex items-center space-x-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50" />
+            <span className="text-sm text-emerald-400 font-medium">
+              Realtime Monitoring
             </span>
           </div>
 
-          <span className="hidden sm:block w-px h-4 bg-cyan-300/15" />
-
-          {/* LIVE indicator */}
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40 animate-ping" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
-          </span>
-          <span className="hidden sm:inline text-emerald-300 font-semibold tracking-wider">
-            LIVE
-          </span>
-
-          <span className="hidden sm:block w-px h-4 bg-cyan-300/15" />
-
-          {/* Time Active */}
-          <time className="font-mono text-[11px] sm:text-[12px] bg-gradient-to-r from-cyan-200 to-blue-200 bg-clip-text text-transparent font-semibold">
-            {activeTime}
-          </time>
+          {/* Mobile */}
+          <div className="flex lg:hidden items-center space-x-1">
+            <SensorPill
+              icon={<Droplets className="w-4 h-4" />}
+              label="SHT31"
+              onClick={() => openSensorDetail("sht31")}
+            />
+            <SensorPill
+              icon={<Wind className="w-4 h-4" />}
+              label="GP2Y"
+              onClick={() => openSensorDetail("gp2y")}
+            />
+            <SensorPill
+              icon={<Gauge className="w-4 h-4" />}
+              label="ENS160"
+              onClick={() => openSensorDetail("ens160")}
+            />
+          </div>
         </div>
       </div>
-
-      {/* Mobile pills */}
-      <div className="lg:hidden border-t border-cyan-300/10 bg-[#0B1628]/40 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-2 py-2 overflow-x-auto no-scrollbar flex items-center gap-2">
-          <SensorPill
-            onClick={() => openSensorDetail("sht31")}
-            icon={<Droplets className="h-4 w-4" />}
-            label="SHT31"
-          />
-          <SensorPill
-            onClick={() => openSensorDetail("gp2y")}
-            icon={<Gauge className="h-4 w-4" />}
-            label="GP2Y"
-          />
-          <SensorPill
-            onClick={() => openSensorDetail("ens160")}
-            icon={<Activity className="h-4 w-4" />}
-            label="ENS160"
-          />
-        </div>
-      </div>
-    </nav>
+    </div>
   );
 };
-
-const Dot = () => <span className="mx-1 h-1 w-1 rounded-full bg-cyan-300/30" />;
 
 const SensorPill = ({ icon, label, onClick }) => (
   <button
     onClick={onClick}
-    title={`Buka detail ${label}`}
-    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold shadow-sm transition-all duration-200 bg-[#0B1628]/70 border-cyan-300/20 text-cyan-100 hover:bg-[#0B1E3A]/80 hover:border-cyan-300/40 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+    className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-emerald-500/30 transition-all group"
   >
-    <span className="text-cyan-300">{icon}</span>
-    <span>{label}</span>
+    <span className="text-slate-400 group-hover:text-emerald-400 transition-colors">
+      {icon}
+    </span>
+    <span className="text-sm text-slate-300 group-hover:text-emerald-400 transition-colors font-medium">
+      {label}
+    </span>
   </button>
 );
 
