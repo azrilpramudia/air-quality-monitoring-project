@@ -4,93 +4,162 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Helper: convert only if number valid
-const safeNum = (v) => (typeof v === "number" && !isNaN(v) ? v : 0);
+/* =====================================================
+   CONFIG
+===================================================== */
 
-// Helper: validate timestamp from device
+// Minimal interval simpan ke DB per device (ms)
+const MIN_INSERT_INTERVAL = 60_000; // 1 menit
+
+// Threshold perubahan minimal agar data dianggap penting
+const DELTA = {
+  temperature: 0.2, // °C
+  humidity: 1.0, // %
+  tvoc: 20, // ppb
+  eco2: 30, // ppm
+  dust: 10, // ug/m3
+};
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+// Pastikan number valid
+const safeNum = (v) => (typeof v === "number" && !isNaN(v) ? v : null);
+
+// Validasi range fisik
+const clamp = (v, min, max) => {
+  if (typeof v !== "number") return null;
+  if (v < min || v > max) return null;
+  return v;
+};
+
+// ESP32 kirim ts dalam detik → Date (ms)
 function safeTimestamp(ts) {
-  if (!ts) return new Date();
-
   const n = Number(ts);
-  if (isNaN(n)) return new Date();
-
-  const d = new Date(n);
-  if (d.toString() === "Invalid Date") return new Date();
-
-  return d;
+  if (!n || isNaN(n)) return null;
+  return new Date(n * 1000);
 }
 
+// Cek apakah ada perubahan signifikan
+function hasSignificantChange(curr, last) {
+  if (!last) return true;
+
+  return (
+    Math.abs(curr.temperature - last.temperature) > DELTA.temperature ||
+    Math.abs(curr.humidity - last.humidity) > DELTA.humidity ||
+    Math.abs(curr.tvoc - last.tvoc) > DELTA.tvoc ||
+    Math.abs(curr.eco2 - last.eco2) > DELTA.eco2 ||
+    Math.abs(curr.dust - last.dust) > DELTA.dust
+  );
+}
+
+/* =====================================================
+   MQTT EVENTS
+===================================================== */
+
 mqttClient.on("connect", () => {
-  console.log("📡 MQTT Connected!");
+  console.log("📡 MQTT Connected");
 });
 
-// IMPORTANT: include 'packet' argument
 mqttClient.on("message", async (topic, message, packet) => {
   try {
-    // 🚫 Ignore retained messages (ghost messages)
-    if (packet?.retain) {
-      console.log("⚠️ Ignored retained MQTT message");
-      return;
-    }
+    // 🚫 Abaikan retained / ghost message
+    if (packet?.retain) return;
 
-    const raw = message.toString();
-
-    // 1. Parse JSON
+    // 1️⃣ Parse JSON
     let data;
     try {
-      data = JSON.parse(raw);
+      data = JSON.parse(message.toString());
     } catch {
-      console.error("❌ Invalid JSON from MQTT:", raw);
+      console.error("❌ Invalid JSON from MQTT");
       return;
     }
 
     console.log("📥 Incoming MQTT:", data);
 
-    // 2. Mapping sensor values
-    const mapped = {
-      temperature: safeNum(data.temp_c),
-      humidity: safeNum(data.rh_pct),
-      tvoc: safeNum(data.tvoc_ppb),
-      eco2: safeNum(data.eco2_ppm),
-      dust: safeNum(data.dust_ugm3),
-      aqi: safeNum(data.aqi),
-      createdAt: safeTimestamp(data.ts),
+    // 2️⃣ Validasi timestamp sensor
+    const sensorTs = safeTimestamp(data.ts);
+    if (!sensorTs) return;
+
+    // 3️⃣ Validasi & sanitasi nilai sensor
+    const cleaned = {
       deviceId: data.device_id ?? "unknown",
+
+      temperature: clamp(safeNum(data.temp_c), -10, 60),
+      humidity: clamp(safeNum(data.rh_pct), 0, 100),
+      tvoc: clamp(safeNum(data.tvoc_ppb), 0, 2000),
+      eco2: clamp(safeNum(data.eco2_ppm), 350, 5000),
+      dust: clamp(safeNum(data.dust_ugm3), 0, 3000),
+
+      aqi: clamp(safeNum(data.aqi), 1, 5),
     };
 
-    console.log("🔄 Normalized:", mapped);
-
-    // 3. Prevent duplicate readings (within 1 sec)
-    const last = await prisma.sensordata.findFirst({
-      orderBy: { id: "desc" },
-    });
-
-    if (last && Math.abs(mapped.createdAt - last.createdAt) < 1000) {
-      console.log("⏩ Skipped duplicate sensor data");
-    } else {
-      // 4. Save to database
-      await prisma.sensordata.create({
-        data: {
-          temperature: mapped.temperature,
-          humidity: mapped.humidity,
-          tvoc: mapped.tvoc,
-          eco2: mapped.eco2,
-          dust: mapped.dust,
-          aqi: mapped.aqi,
-          createdAt: mapped.createdAt,
-        },
-      });
-
-      console.log("💾 Saved to DB at:", mapped.createdAt);
+    // Jika ada data penting yang invalid → drop
+    if (
+      cleaned.temperature === null ||
+      cleaned.humidity === null ||
+      cleaned.tvoc === null ||
+      cleaned.eco2 === null ||
+      cleaned.dust === null
+    ) {
+      console.log("⚠️ Dropped invalid sensor data");
+      return;
     }
 
-    // 5. WebSocket broadcast
-    broadcastWS({
-      type: "sensor_update",
-      data: mapped,
+    console.log("🔄 Normalized:", {
+      ...cleaned,
+      ts: sensorTs,
     });
 
-    console.log("📤 WebSocket broadcast complete\n");
+    /* =================================================
+       🔔 REALTIME STREAM (ALWAYS)
+       UI / Dashboard harus selalu update
+    ================================================== */
+
+    broadcastWS({
+      type: "sensor_update",
+      data: {
+        ...cleaned,
+        ts: sensorTs,
+      },
+    });
+
+    console.log("📤 WebSocket broadcast sent");
+
+    /* =================================================
+       🧊 DATABASE FILTERING (STRICT)
+       DB boleh ketat, UI tidak
+    ================================================== */
+
+    // Ambil data terakhir device ini
+    const last = await prisma.actual.findFirst({
+      where: { deviceId: cleaned.deviceId },
+      orderBy: { ts: "desc" },
+    });
+
+    // 4️⃣ Rate limit (hindari overload DB)
+    if (last && sensorTs - last.ts < MIN_INSERT_INTERVAL) {
+      console.log("⏱️ DB skip: rate limit");
+      return;
+    }
+
+    // 5️⃣ Delta filter (hindari data stagnan)
+    if (last && !hasSignificantChange(cleaned, last)) {
+      console.log("📉 DB skip: no significant change");
+      return;
+    }
+
+    // 6️⃣ Simpan ke database
+    await prisma.actual.create({
+      data: {
+        ts: sensorTs, // waktu sensor
+        createdAt: new Date(), // waktu server
+        ...cleaned,
+      },
+    });
+
+    console.log("💾 Saved to DB:", cleaned.deviceId, sensorTs.toISOString());
   } catch (err) {
     console.error("❌ MQTT Handler Error:", err);
   }

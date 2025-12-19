@@ -32,7 +32,7 @@ app.add_middleware(
 # ========================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "..", "models", "xgb_multi.pkl")
+MODEL_PATH = os.path.join(BASE_DIR, "..", "models", "rf_hourly_fixed.pkl")
 MODEL_PATH = os.path.abspath(MODEL_PATH)
 
 print("=" * 50)
@@ -105,7 +105,7 @@ START_TIME = time.time()
 # ENDPOINTS
 # ========================================
 
-@app.get("/")
+@app.get("/predict")
 async def root():
     """Root endpoint - API info"""
     return {
@@ -163,6 +163,55 @@ async def predict(request: PredictRequest):
             pred_value = [float(x) for x in pred[0]]
         else:
             pred_value = [float(pred[0])]
+        
+        # ============================================
+        # FIX: Ensure only 5 predictions returned
+        # ============================================
+        EXPECTED_TARGETS = 5
+        
+        if len(pred_value) > EXPECTED_TARGETS:
+            print(f"⚠️ Model returned {len(pred_value)} values, expected {EXPECTED_TARGETS}")
+            print(f"⚠️ Extracting first {EXPECTED_TARGETS} values (one prediction per target)")
+            pred_value = pred_value[:EXPECTED_TARGETS]
+            print(f"✅ Extracted: {pred_value}")
+        
+        # Ensure target_cols matches prediction length
+        if len(target_cols) > EXPECTED_TARGETS:
+            print(f"⚠️ Trimming target_cols from {len(target_cols)} to {EXPECTED_TARGETS}")
+            target_cols = target_cols[:EXPECTED_TARGETS]
+        
+        # Final validation
+        if len(pred_value) != len(target_cols):
+            error_msg = f"Mismatch: {len(pred_value)} predictions vs {len(target_cols)} targets"
+            print(f"❌ {error_msg}")
+            raise ValueError(error_msg)
+        
+        # ============================================
+        # FIX: Multi-step forecast → extract first step
+        # ============================================
+        expected_targets = len(target_cols)
+        
+        if len(pred_value) > expected_targets:
+            print(f"⚠️ Model returned {len(pred_value)} values, expected {expected_targets}")
+            print(f"⚠️ This suggests multi-step forecasting. Extracting first timestep only.")
+            
+            # Assume format: [t1_temp, t1_rh, t1_tvoc, t1_eco2, t1_dust, t2_temp, t2_rh, ...]
+            # Take only first N values
+            pred_value = pred_value[:expected_targets]
+            print(f"✅ Using first {expected_targets} predictions: {pred_value}")
+        
+        # ============================================
+        # CRITICAL FIX: Ensure target_cols matches predictions
+        # ============================================
+        if len(target_cols) > expected_targets:
+            print(f"⚠️ target_cols has {len(target_cols)} items, trimming to {expected_targets}")
+            target_cols = target_cols[:expected_targets]
+        
+        # Final validation
+        if len(pred_value) != len(target_cols):
+            error_msg = f"Prediction/target_cols mismatch: {len(pred_value)} vs {len(target_cols)}"
+            print(f"❌ {error_msg}")
+            raise ValueError(error_msg)
         
         # Validation: Check for extreme values
         bounds = {

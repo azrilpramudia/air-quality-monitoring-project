@@ -11,7 +11,7 @@ import paho.mqtt.client as mqtt
 # ===== MQTT (opsional) =====
 BROKER      = "broker.emqx.io"
 PORT        = 1883
-TOPIC_OUT   = "iot/ruang1/forecast"
+TOPIC_OUT   = "uninus/iot/air_quality/esp32-01"
 CLIENT_ID   = "pc-forecast-xgb-168h"
 
 # ===== LOAD MODEL =====

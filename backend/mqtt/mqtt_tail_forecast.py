@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import paho.mqtt.client as mqtt
 
 BROKER = "broker.emqx.io"
-TOPIC  = "iot/ruang1/forecast"
+TOPIC  = "uninus/iot/air_quality/esp32-01"
 WIB = ZoneInfo("Asia/Jakarta")
 
 def to_wib(ts_epoch):

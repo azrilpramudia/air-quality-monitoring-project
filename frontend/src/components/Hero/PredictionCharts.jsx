@@ -72,7 +72,12 @@ const PredictionChart = ({ type, title, unit, color, icon, mlOnline }) => {
   useEffect(() => {
     if (liveValue == null) return;
 
-    const timeLabel = new Date().toTimeString().slice(0, 5);
+    const now = new Date();
+    const timeLabel = now.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
 
     setRawData((prev) => {
       const historical = prev.filter((d) => d.type === "actual");
@@ -81,7 +86,10 @@ const PredictionChart = ({ type, title, unit, color, icon, mlOnline }) => {
       const updatedHistorical = [
         ...historical,
         { time: timeLabel, value: liveValue, type: "actual" },
-      ];
+      ].filter((item, index, arr) => {
+        if (index === 0) return true;
+        return item.value !== arr[index - 1].value;
+      });
 
       const slicedHistorical = updatedHistorical.slice(-48);
 
@@ -89,7 +97,7 @@ const PredictionChart = ({ type, title, unit, color, icon, mlOnline }) => {
     });
   }, [liveValue, type]);
 
-  if (!rawData.length) return null;
+  const hasData = rawData.length > 0;
 
   const historicalData = rawData.filter((d) => d.type === "actual");
   let predictedData = rawData.filter((d) => d.type === "predicted");

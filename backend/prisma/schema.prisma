@@ -7,19 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model sensordata {
+model Actual {
   id          Int      @id @default(autoincrement())
+  ts          DateTime
+  deviceId    String
   temperature Float
   humidity    Float
   tvoc        Int
   eco2        Int
   dust        Float
-  createdAt   DateTime @default(now())
   aqi         Float?
+  createdAt   DateTime @default(now())
+
+  predictions Prediction[]
 }
 
 model Prediction {
   id           Int      @id @default(autoincrement())
+  actualId     Int
+  actual       Actual  @relation(fields: [actualId], references: [id])
+
   createdAt    DateTime @default(now())
   timestamp    DateTime
   temp_c       Float
@@ -29,5 +36,7 @@ model Prediction {
   dust_ugm3    Float
   featuresJson Json
   forecastJson Json
+  modelVersion String
 }
+
 
