@@ -1,46 +1,42 @@
-import { buildFeatures } from "./featureBuilder.js";
-import { updateHistory } from "./featureHistory.js";
-import { requestMLPrediction, mlOnline } from "./predict.service.js";
+import axios from "axios";
+import { PrismaClient } from "@prisma/client";
 
-export async function manualPredict(req, res, next) {
+const prisma = new PrismaClient();
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "http://127.0.0.1:8500";
+
+export async function manualPredict(req, res) {
   try {
-    const sensors = req.body;
+    const { deviceId = "esp32-01-client-io" } = req.body;
 
-    const required = ["temp_c", "rh_pct", "tvoc_ppb", "eco2_ppm", "dust_ugm3"];
-    for (const key of required) {
-      if (typeof sensors[key] !== "number") {
-        return res.status(400).json({
-          success: false,
-          error: `Missing or invalid field: ${key}`,
-        });
-      }
+    // 1️⃣ Ambil data sensor terakhir dari DB
+    const last = await prisma.actual.findFirst({
+      where: { deviceId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!last) {
+      return res.status(404).json({
+        success: false,
+        message: "No sensor data found",
+      });
     }
 
-    sensors.timestamp = sensors.timestamp || Date.now();
-
-    // Build features
-    const features = buildFeatures(sensors);
-    updateHistory(sensors);
-
-    // ⛔ If ML is offline → DO NOT skip manual test
-    if (!mlOnline) {
-      console.log("⚠️ ML offline — forcing manual prediction attempt...");
-    }
-
-    // Force call ML even if mlOnline=false
-    const ml = await requestMLPrediction(features);
+    // 2️⃣ KIRIM KE ML TANPA BUILD FEATURE
+    // ML yang urus feature engineering
+    const mlRes = await axios.post(`${ML_SERVICE_URL}/predict`, {
+      device_id: deviceId,
+      lookback_hours: 24, // ⬅️ ML ambil data sendiri dari DB
+    });
 
     return res.json({
       success: true,
-      features,
-      prediction: ml.prediction,
-      target_cols: ml.target_cols,
+      actual: last,
+      prediction: mlRes.data,
     });
   } catch (err) {
-    console.error("❌ Manual Predict Error:", err);
+    console.error("Manual predict error:", err);
     return res.status(500).json({
       success: false,
-      message: "ML prediction failed.",
       error: err.message,
     });
   }

@@ -1,12 +1,13 @@
 // ========================================
-// predict.service.js - FIXED VERSION
+// predict.service.js — FINAL & CORRECT
 // ========================================
 
 import axios from "axios";
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "http://127.0.0.1:8500";
-const HEALTH_CHECK_INTERVAL = 30000; // Check every 30 seconds
-const REQUEST_TIMEOUT = 10000; // 10 second timeout
+
+const HEALTH_CHECK_INTERVAL = 30000;
+const REQUEST_TIMEOUT = 10000;
 
 // ========================================
 // ML SERVICE STATUS
@@ -16,9 +17,6 @@ let mlOnline = false;
 let lastHealthCheck = null;
 let healthCheckTimer = null;
 
-/**
- * Get current ML service status
- */
 export function getMlStatus() {
   return {
     online: mlOnline,
@@ -26,17 +24,14 @@ export function getMlStatus() {
   };
 }
 
-/**
- * Check if ML service is online
- */
 export async function checkMLHealth() {
   try {
-    const response = await axios.get(`${ML_SERVICE_URL}/health`, {
+    const res = await axios.get(`${ML_SERVICE_URL}/health`, {
       timeout: 5000,
     });
 
     const wasOffline = !mlOnline;
-    mlOnline = response.status === 200;
+    mlOnline = res.status === 200;
     lastHealthCheck = new Date();
 
     if (mlOnline && wasOffline) {
@@ -57,30 +52,18 @@ export async function checkMLHealth() {
   }
 }
 
-/**
- * Start periodic health checks
- */
 export function startMLHealthCheck() {
   console.log(
     `🔍 [ML] Starting health checks every ${HEALTH_CHECK_INTERVAL}ms`
   );
 
-  // Initial check
   checkMLHealth();
 
-  // Periodic checks
-  if (healthCheckTimer) {
-    clearInterval(healthCheckTimer);
-  }
+  if (healthCheckTimer) clearInterval(healthCheckTimer);
 
-  healthCheckTimer = setInterval(() => {
-    checkMLHealth();
-  }, HEALTH_CHECK_INTERVAL);
+  healthCheckTimer = setInterval(checkMLHealth, HEALTH_CHECK_INTERVAL);
 }
 
-/**
- * Stop health checks
- */
 export function stopMLHealthCheck() {
   if (healthCheckTimer) {
     clearInterval(healthCheckTimer);
@@ -90,53 +73,52 @@ export function stopMLHealthCheck() {
 }
 
 // ========================================
-// ML PREDICTION REQUEST
+// ML PREDICTION REQUEST (FIXED)
 // ========================================
 
 /**
  * Request prediction from ML service
+ * NOTE:
+ * - DO NOT send features
+ * - ML service pulls data from DB
  */
-export async function requestMLPrediction(features) {
+export async function requestMLPrediction(deviceId, lookbackHours = 24) {
   if (!mlOnline) {
     throw new Error("ML service is offline");
   }
 
   try {
-    const response = await axios.post(
+    const res = await axios.post(
       `${ML_SERVICE_URL}/predict`,
-      { features },
+      {
+        device_id: deviceId,
+        lookback_hours: lookbackHours,
+      },
       {
         timeout: REQUEST_TIMEOUT,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       }
     );
 
-    // Validate response
-    if (!response.data || !response.data.prediction) {
+    if (!res.data || !res.data.prediction) {
       throw new Error("Invalid ML response format");
     }
 
-    return response.data;
+    return res.data;
   } catch (err) {
-    // If request fails, mark as offline and trigger health check
     if (err.code === "ECONNREFUSED" || err.code === "ETIMEDOUT") {
       mlOnline = false;
-      console.error("❌ [ML] Service unreachable, marking as offline");
-      checkMLHealth(); // Immediate recheck
+      console.error("❌ [ML] Service unreachable");
+      checkMLHealth();
     }
-
     throw err;
   }
 }
 
 // ========================================
-// EXPORT FOR WORKER
+// AUTO START
 // ========================================
 
-// Export reactive getter instead of direct variable
-export { mlOnline };
-
-// Auto-start health checks when module loads
 startMLHealthCheck();
+
+export { mlOnline };

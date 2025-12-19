@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 
-import sensorRoutes from "./modules/sensor/sensor.routes.js";
+import sensorRoutes from "./modules/actual/actual.routes.js";
 import predictionRoutes from "./modules/prediction/predict.routes.js";
 import historyRoutes from "./modules/history/history.routes.js";
 
@@ -24,7 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ROUTES
-app.use("/api/sensor", sensorRoutes);
+app.use("/api/actual", sensorRoutes);
 app.use("/api/history", historyRoutes);
 app.use("/api/predict", predictionRoutes);
 

@@ -1,7 +1,7 @@
 import {
   getAllSensorDataService,
   deleteAllSensorDataService,
-} from "./sensor.service.js";
+} from "./actual.service.js";
 
 export const getAllSensorData = async (req, res) => {
   try {

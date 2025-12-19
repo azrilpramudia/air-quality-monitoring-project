@@ -32,7 +32,7 @@ app.add_middleware(
 # ========================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "..", "models", "rf_hourly_fixed.pkl")
+MODEL_PATH = os.path.join(BASE_DIR, "..", "ai", "models", "rf_hourly_fixed.pkl")
 MODEL_PATH = os.path.abspath(MODEL_PATH)
 
 print("=" * 50)
