@@ -4,7 +4,7 @@ build_features.py
 Single source of truth for feature engineering.
 Used by:
 - Training
-- Prediction (inference)
+- Prediction (inference from DB / API)
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ BASE_COLS = [
     "dust_ugm3",
 ]
 
-# Lags in HOURS (for hourly model)
+# Lags in HOURS (must match training)
 LAGS = [1, 2, 3, 6, 12, 24]
 
 # Rolling windows in HOURS
@@ -35,9 +35,9 @@ ROLL_WINDOWS = [3, 6, 12, 24]
 # ======================================================
 
 def get_feature_names() -> List[str]:
-    feats = []
+    feats: List[str] = []
 
-    # Base (latest value)
+    # Base (current values)
     for c in BASE_COLS:
         feats.append(c)
 
@@ -46,13 +46,13 @@ def get_feature_names() -> List[str]:
         for l in LAGS:
             feats.append(f"{c}_lag_{l}")
 
-    # Rolling statistics
+    # Rolling stats
     for c in BASE_COLS:
         for w in ROLL_WINDOWS:
             feats.append(f"{c}_roll_mean_{w}")
             feats.append(f"{c}_roll_std_{w}")
 
-    # Time features
+    # Cyclical time features
     feats += [
         "hour_sin",
         "hour_cos",
@@ -69,7 +69,7 @@ def get_feature_names() -> List[str]:
 
 def build_features(
     df: pd.DataFrame,
-    freq: str = "1H",
+    freq: str = "1h",
     fillna: bool = True,
 ) -> pd.DataFrame:
     """
@@ -78,25 +78,31 @@ def build_features(
     Parameters
     ----------
     df : pd.DataFrame
-        Must contain:
-        - datetime index
-        - BASE_COLS
+        - DatetimeIndex
+        - Columns = BASE_COLS
     freq : str
-        Expected frequency ("1H")
+        Expected frequency ("1h")
     fillna : bool
         Forward/backward fill missing values
 
     Returns
     -------
     pd.DataFrame
-        Feature dataframe (rows aligned with df)
+        Feature dataframe (aligned with df index)
     """
 
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError("DataFrame index must be DatetimeIndex")
 
-    # Sort & resample to fixed freq
+    # ------------------------------
+    # SORT & CLEAN INDEX (CRITICAL)
+    # ------------------------------
     df = df.sort_index()
+
+    # 🔥 FIX UTAMA: drop duplicate timestamps (IoT-safe)
+    df = df[~df.index.duplicated(keep="last")]
+
+    # Resample to fixed frequency (hourly)
     df = df.asfreq(freq)
 
     if fillna:
@@ -105,7 +111,7 @@ def build_features(
     feats: Dict[str, pd.Series] = {}
 
     # ------------------------------
-    # Base features (current value)
+    # Base features
     # ------------------------------
     for c in BASE_COLS:
         feats[c] = df[c]
@@ -141,11 +147,9 @@ def build_features(
     # ------------------------------
     X = pd.DataFrame(feats, index=df.index)
 
-    # Ensure column order is FIXED
-    feature_names = get_feature_names()
-    X = X.reindex(columns=feature_names)
+    # 🔒 ENSURE FIXED FEATURE ORDER
+    X = X.reindex(columns=get_feature_names())
 
-    # Final NA handling
     if fillna:
         X = X.ffill().bfill()
 
@@ -153,15 +157,17 @@ def build_features(
 
 
 # ======================================================
-# UTILITY
+# LATEST FEATURES (FOR PREDICTION)
 # ======================================================
 
 def build_latest_features(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Build features and return only the LAST ROW
-    (used for prediction)
+    Build features and return ONLY the last row.
 
-    Returns shape: (1, n_features)
+    Returns
+    -------
+    pd.DataFrame
+        Shape: (1, n_features)
     """
     X = build_features(df)
     return X.iloc[[-1]]
@@ -172,8 +178,8 @@ def build_latest_features(df: pd.DataFrame) -> pd.DataFrame:
 # ======================================================
 
 if __name__ == "__main__":
-    # Simple self-test
-    idx = pd.date_range("2025-01-01", periods=48, freq="1H")
+    idx = pd.date_range("2025-01-01", periods=48, freq="1h")
+
     df_test = pd.DataFrame(
         {
             "temp_c": np.random.rand(48) * 10 + 25,
@@ -186,5 +192,6 @@ if __name__ == "__main__":
     )
 
     X = build_latest_features(df_test)
-    print("Feature shape:", X.shape)
-    print("Feature columns:", len(get_feature_names()))
+
+    print("✅ Feature shape:", X.shape)
+    print("✅ Feature count:", len(get_feature_names()))
