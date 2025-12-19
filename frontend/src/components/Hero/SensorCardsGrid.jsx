@@ -140,7 +140,7 @@ const SensorCardsGrid = ({ sensorData, onOpenChart, handleSensorClick }) => {
           </div>
 
           {/* Footer - Lihat Penjelasan Sensor (Navigate to Detail Page) */}
-          <div 
+          <div
             onClick={() => handleSensorClick(sensor.type)}
             className="px-5 sm:px-6 pb-4 sm:pb-5 bg-gradient-to-b from-slate-800/40 to-slate-900/60 cursor-pointer"
           >

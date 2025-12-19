@@ -1,28 +1,33 @@
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "mysql"
-    url      = env("DATABASE_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
-model SensorData {
-    id          Int      @id @default(autoincrement())
-    temperature Float
-    humidity    Float
-    tvoc        Int
-    eco2        Int
-    dust        Float
-    aqi         Float? 
-    createdAt   DateTime @default(now())
+model sensordata {
+  id          Int      @id @default(autoincrement())
+  temperature Float
+  humidity    Float
+  tvoc        Int
+  eco2        Int
+  dust        Float
+  createdAt   DateTime @default(now())
+  aqi         Float?
 }
 
-model PredictionData {
+model Prediction {
   id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
   timestamp    DateTime
-  tempPred     Float
-  tvocPred     Float
+  temp_c       Float
+  rh_pct       Float
+  tvoc_ppb     Float
+  eco2_ppm     Float
+  dust_ugm3    Float
+  featuresJson Json
+  forecastJson Json
 }
-
 

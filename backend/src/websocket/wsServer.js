@@ -1,13 +1,18 @@
 import { WebSocketServer } from "ws";
 
 let wss = null;
+let hasLoggedConnection = false; // 🔥 Prevent repeated logs
 
 export const initWebSocket = () => {
   wss = new WebSocketServer({ port: 4001 });
   console.log("🔥 WebSocket Server running on ws://localhost:4001");
 
   wss.on("connection", (ws) => {
-    console.log("⚡ Client Connected");
+    // Log only ONCE forever
+    if (!hasLoggedConnection) {
+      console.log("⚡ WebSocket Client Connected");
+      hasLoggedConnection = true;
+    }
 
     ws.send(
       JSON.stringify({

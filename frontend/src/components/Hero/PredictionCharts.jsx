@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useRef } from "react";
 import {
@@ -27,16 +28,12 @@ const CustomTooltip = ({ active, payload, unit }) => {
   return null;
 };
 
-const PredictionChart = ({ type, title, unit, color, icon }) => {
+const PredictionChart = ({ type, title, unit, color, icon, mlOnline }) => {
   const [rawData, setRawData] = useState([]);
   const scrollRef = useRef(null);
 
-  // ================================
-  // REAL-TIME SENSOR DATA ✔️
-  // ================================
   const { data: sensorData } = useRealtimeSensor();
 
-  // value realtime untuk type tertentu
   const liveValue =
     type === "temperature"
       ? sensorData?.temperature
@@ -44,9 +41,6 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
       ? sensorData?.tvoc
       : null;
 
-  // ================================
-  // FETCH PREDICTION (historical + predicted) ✔️
-  // ================================
   const pendingRef = useRef(false);
 
   const fetchPrediction = async () => {
@@ -54,11 +48,12 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
     pendingRef.current = true;
 
     try {
-      const res = await fetch(`http://localhost:5000/ai/prediction/${type}`);
+      const res = await fetch(
+        `http://localhost:5000/api/predict/chart/${type}`
+      );
       const json = await res.json();
 
       if (json?.data) {
-        // kita simpan apa adanya: di dalamnya sudah ada type: "actual" | "predicted"
         setRawData(json.data);
       }
     } catch (err) {
@@ -70,59 +65,43 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
     }
   };
 
-  // Load awal
   useEffect(() => {
     fetchPrediction();
   }, [type]);
 
-  // ================================
-  // INJEK REAL-TIME KE GARIS ACTUAL ✔️
-  // setiap ada data baru dari sensor, tambahkan di ujung historical
-  // ================================
   useEffect(() => {
     if (liveValue == null) return;
 
     const timeLabel = new Date().toTimeString().slice(0, 5);
 
     setRawData((prev) => {
-      // pisahkan actual & predicted yang lama
       const historical = prev.filter((d) => d.type === "actual");
       const predicted = prev.filter((d) => d.type === "predicted");
 
-      // tambahkan titik actual terbaru (realtime)
       const updatedHistorical = [
         ...historical,
-        {
-          time: timeLabel,
-          value: liveValue,
-          type: "actual",
-        },
+        { time: timeLabel, value: liveValue, type: "actual" },
       ];
 
-      // batasi supaya tidak terlalu panjang (misal max 48 titik actual)
       const slicedHistorical = updatedHistorical.slice(-48);
 
       return [...slicedHistorical, ...predicted];
     });
   }, [liveValue, type]);
 
-  // ================================
-  // DATA UNTUK CHART
-  // ================================
   if (!rawData.length) return null;
 
   const historicalData = rawData.filter((d) => d.type === "actual");
-  const predictedData = rawData.filter((d) => d.type === "predicted");
+  let predictedData = rawData.filter((d) => d.type === "predicted");
 
-  // sambungkan garis actual -> predicted
-  if (historicalData.length > 0 && predictedData.length > 0) {
+  // sambungkan garis actual -> predicted (only if ML is ON)
+  if (mlOnline && historicalData.length > 0 && predictedData.length > 0) {
     const lastActual = historicalData[historicalData.length - 1];
     if (predictedData[0]?.time !== lastActual.time) {
       predictedData.unshift(lastActual);
     }
   }
 
-  // nilai besar di header:
   const currentValue =
     liveValue ??
     historicalData[historicalData.length - 1]?.value ??
@@ -241,7 +220,7 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
 
                 <Tooltip content={<CustomTooltip unit={unit} />} />
 
-                {/* DATA AKTUAL (historical + realtime) */}
+                {/* DATA AKTUAL */}
                 <Line
                   data={historicalData}
                   type="monotone"
@@ -252,17 +231,19 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
                   isAnimationActive={false}
                 />
 
-                {/* PREDICTION */}
-                <Line
-                  data={predictedData}
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#F59E0B"
-                  strokeWidth={3}
-                  strokeDasharray="8 4"
-                  dot={{ fill: "#F59E0B", r: 4, strokeWidth: 0 }}
-                  isAnimationActive={false}
-                />
+                {/* PREDICTION — ONLY IF ML ACTIVE */}
+                {mlOnline && predictedData.length > 0 && (
+                  <Line
+                    data={predictedData}
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#F59E0B"
+                    strokeWidth={3}
+                    strokeDasharray="8 4"
+                    dot={{ fill: "#F59E0B", r: 4, strokeWidth: 0 }}
+                    isAnimationActive={false}
+                  />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -284,25 +265,24 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
               />
               <span className="text-slate-400 font-medium">Data Aktual</span>
             </div>
-            <div className="flex items-center gap-2">
-              <svg width="32" height="4" viewBox="0 0 32 4">
-                <line
-                  x1="0"
-                  y1="2"
-                  x2="32"
-                  y2="2"
-                  stroke="#F59E0B"
-                  strokeWidth="2"
-                  strokeDasharray="6 3"
-                />
-              </svg>
-              <span className="text-slate-400 font-medium">Prediksi AI</span>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-1.5 text-slate-500">
-            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-            <span className="font-medium">Live</span>
+            {/* LEGEND PREDIKSI — ONLY IF ML ACTIVE */}
+            {mlOnline && (
+              <div className="flex items-center gap-2">
+                <svg width="32" height="4" viewBox="0 0 32 4">
+                  <line
+                    x1="0"
+                    y1="2"
+                    x2="32"
+                    y2="2"
+                    stroke="#F59E0B"
+                    strokeWidth="2"
+                    strokeDasharray="6 3"
+                  />
+                </svg>
+                <span className="text-slate-400 font-medium">Prediksi AI</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -311,22 +291,61 @@ const PredictionChart = ({ type, title, unit, color, icon }) => {
 };
 
 const PredictionCharts = () => {
+  const [mlOnline, setMlOnline] = useState(null);
+
+  // 🔥 FIXED — VALID ML STATUS FETCHER
+  const fetchMLStatus = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/predict/chart/temperature"
+      );
+      const json = await res.json();
+      setMlOnline(json?.mlOnline);
+    } catch (err) {
+      setMlOnline(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMLStatus();
+    const interval = setInterval(fetchMLStatus, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div 
+    <div
       className="glass-effect rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl animate-slide-in mb-8"
       style={{ animationDelay: "0.35s" }}
     >
-      {/* Header Section dengan spacing yang lebih baik */}
+      {/* ML STATUS BADGE */}
+      <div className="flex justify-center mb-4">
+        {mlOnline === null ? (
+          <span className="px-4 py-1 text-xs rounded-full bg-slate-700 text-slate-300">
+            Checking ML service...
+          </span>
+        ) : mlOnline ? (
+          <span className="px-4 py-1 text-xs rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+            AI Prediction Online
+          </span>
+        ) : (
+          <span className="px-4 py-1 text-xs rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+            AI Prediction Offline
+          </span>
+        )}
+      </div>
+
+      {/* Header */}
       <div className="text-center mb-8">
         <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
           Prediksi Kualitas Udara
         </h2>
         <p className="text-slate-400 text-xs sm:text-sm px-4">
-          Analisis prediktif berbasis AI untuk membantu Anda merencanakan aktivitas berdasarkan kondisi udara masa depan
+          Analisis prediktif berbasis AI untuk membantu Anda merencanakan
+          aktivitas berdasarkan kondisi udara masa depan
         </p>
       </div>
 
-      {/* Charts Grid dengan spacing yang konsisten */}
+      {/* CHARTS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <PredictionChart
           type="temperature"
@@ -334,13 +353,16 @@ const PredictionCharts = () => {
           unit="°C"
           color="#06B6D4"
           icon="🌡️"
+          mlOnline={mlOnline}
         />
+
         <PredictionChart
           type="tvoc"
           title="TVOC"
           unit="ppb"
           color="#06B6D4"
           icon="🌊"
+          mlOnline={mlOnline}
         />
       </div>
     </div>

@@ -178,20 +178,6 @@ const Footer = () => {
             </div>
           </div>
         </div>
-
-        {/* Status Badge (centered on all devices) */}
-        <div className="mt-6 mb-0 pb-0 flex justify-center">
-          <div className="inline-flex items-center gap-2 bg-slate-900/60 border border-slate-800 rounded-full px-4 py-2">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-            </span>
-            <span className="text-xs text-slate-400">
-              Sistem Berjalan Normal
-            </span>
-          </div>
-        </div>
-
         {/* Underline (kept as-is) */}
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-slate-800/70 to-transparent pointer-events-none" />
       </div>

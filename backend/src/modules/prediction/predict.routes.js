@@ -1,27 +1,20 @@
 import { Router } from "express";
+import { predictAQ } from "./predict.controller.js";
+import { manualPredict } from "./manualPredict.controller.js";
+import { testCreatePrediction } from "./prediction.test.controller.js";
+import { getPredictionChart } from "./prediction.chart.controller.js";
 import {
-  getPrediction,
-  getPredictedRange,
-  getPredictionToday,
-  getPrediction7Days,
-  getPredictionHistory,
-} from "./predict.controller.js";
+  getLatestPrediction,
+  deleteAllPredictions,
+} from "./prediction.extra.controller.js";
 
 const router = Router();
 
-// 1. Prediksi 24 jam
-router.get("/prediction/:type", getPrediction);
-
-// 2. Prediksi custom range (jam/durasi)
-router.get("/prediction-range/:type", getPredictedRange);
-
-// 3. Prediksi untuk hari ini (00:00 – 23:59)
-router.get("/prediction-today/:type", getPredictionToday);
-
-// 4. Prediksi untuk 7 hari ke depan
-router.get("/prediction-7days/:type", getPrediction7Days);
-
-// 5. Riwayat prediction (dari database)
-router.get("/prediction-history/:type", getPredictionHistory);
+router.post("/", predictAQ);
+router.post("/manual", manualPredict);
+router.get("/chart/:type", getPredictionChart);
+router.post("/test-create", testCreatePrediction);
+router.get("/latest", getLatestPrediction);
+router.delete("/delete-all", deleteAllPredictions); // DEV only
 
 export default router;

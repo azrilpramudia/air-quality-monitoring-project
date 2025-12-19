@@ -24,13 +24,18 @@ mqttClient.on("connect", () => {
   console.log("📡 MQTT Connected!");
 });
 
-mqttClient.on("message", async (topic, message) => {
+// IMPORTANT: include 'packet' argument
+mqttClient.on("message", async (topic, message, packet) => {
   try {
+    // 🚫 Ignore retained messages (ghost messages)
+    if (packet?.retain) {
+      console.log("⚠️ Ignored retained MQTT message");
+      return;
+    }
+
     const raw = message.toString();
 
-    // ============================
-    // 1. Validasi JSON MQTT
-    // ============================
+    // 1. Parse JSON
     let data;
     try {
       data = JSON.parse(raw);
@@ -39,12 +44,9 @@ mqttClient.on("message", async (topic, message) => {
       return;
     }
 
-    // Log input
     console.log("📥 Incoming MQTT:", data);
 
-    // ============================
-    // 2. Mapping Data
-    // ============================
+    // 2. Mapping sensor values
     const mapped = {
       temperature: safeNum(data.temp_c),
       humidity: safeNum(data.rh_pct),
@@ -52,28 +54,22 @@ mqttClient.on("message", async (topic, message) => {
       eco2: safeNum(data.eco2_ppm),
       dust: safeNum(data.dust_ugm3),
       aqi: safeNum(data.aqi),
-      createdAt: safeTimestamp(data.ts), // pakai timestamp device
+      createdAt: safeTimestamp(data.ts),
       deviceId: data.device_id ?? "unknown",
     };
 
-    // Optional: log cleaned data
     console.log("🔄 Normalized:", mapped);
 
-    // ============================
-    // 3. Prevent duplikasi data
-    // (Jika device spam data dalam 1 detik)
-    // ============================
-    const last = await prisma.sensorData.findFirst({
+    // 3. Prevent duplicate readings (within 1 sec)
+    const last = await prisma.sensordata.findFirst({
       orderBy: { id: "desc" },
     });
 
     if (last && Math.abs(mapped.createdAt - last.createdAt) < 1000) {
-      console.log("⏩ Skipped duplicate sensor data (within same second)");
+      console.log("⏩ Skipped duplicate sensor data");
     } else {
-      // ============================
-      // 4. Simpan ke Database
-      // ============================
-      await prisma.sensorData.create({
+      // 4. Save to database
+      await prisma.sensordata.create({
         data: {
           temperature: mapped.temperature,
           humidity: mapped.humidity,
@@ -85,12 +81,10 @@ mqttClient.on("message", async (topic, message) => {
         },
       });
 
-      console.log("💾 Saved to database at", mapped.createdAt);
+      console.log("💾 Saved to DB at:", mapped.createdAt);
     }
 
-    // ============================
-    // 5. Broadcast ke WebSocket
-    // ============================
+    // 5. WebSocket broadcast
     broadcastWS({
       type: "sensor_update",
       data: mapped,

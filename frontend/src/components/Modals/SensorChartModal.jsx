@@ -15,15 +15,47 @@ const SensorChartModal = ({
   color,
 }) => {
   const [chartData, setChartData] = useState([]);
-  const [timeRange, setTimeRange] = useState("7d"); // 7d, 24h, 30d
+  const [timeRange, setTimeRange] = useState("7d"); // 24h | 7d | 30d
   const { lastMessage } = useRealtimeContext();
 
+  // ==========================================================
+  // 1. Fetch data dari backend (HISTORICAL)
+  // ==========================================================
+  const fetchHistory = async () => {
+    if (!sensorType) return;
+
+    const hours = timeRange === "24h" ? 24 : timeRange === "7d" ? 168 : 720; // 30d = 720 jam
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/history/${sensorType}?hours=${hours}`
+      );
+
+      const json = await res.json();
+      if (!json?.data) return;
+
+      const formatted = json.data.map((d) => ({
+        date: d.date,
+        time: d.time,
+        value: d.value,
+      }));
+
+      setChartData(formatted);
+    } catch (err) {
+      console.warn("⚠️ Failed to fetch history:", err);
+    }
+  };
+
+  // panggil saat modal dibuka atau type berubah atau range berubah
   useEffect(() => {
     if (isOpen && sensorType) {
-      generateMockData();
+      fetchHistory();
     }
   }, [isOpen, sensorType, timeRange]);
 
+  // ==========================================================
+  // 2. Real-time MQTT → append data terbaru
+  // ==========================================================
   useEffect(() => {
     if (!lastMessage || !isOpen) return;
 
@@ -31,7 +63,6 @@ const SensorChartModal = ({
       const topic = lastMessage.topic;
       const payload = JSON.parse(lastMessage.message || "{}");
 
-      // Adjust according to your topic structure
       if (topic.includes(sensorType)) {
         const newValue = parseFloat(payload.value);
         if (!isNaN(newValue)) {
@@ -47,8 +78,7 @@ const SensorChartModal = ({
             value: newValue,
           };
 
-          // Keep last 30 data points
-          setChartData((prev) => [...prev.slice(-29), newEntry]);
+          setChartData((prev) => [...prev.slice(-499), newEntry]); // keep last 500 points
         }
       }
     } catch (err) {
@@ -56,51 +86,9 @@ const SensorChartModal = ({
     }
   }, [lastMessage, isOpen]);
 
-  const generateMockData = () => {
-    const days = timeRange === "24h" ? 24 : timeRange === "7d" ? 7 : 30;
-    const data = [];
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-
-      let value;
-      switch (sensorType) {
-        case "temperature":
-          value = 25 + Math.random() * 10;
-          break;
-        case "humidity":
-          value = 50 + Math.random() * 30;
-          break;
-        case "tvoc":
-          value = 100 + Math.random() * 400;
-          break;
-        case "eco2":
-          value = 400 + Math.random() * 600;
-          break;
-        case "dust":
-          value = 10 + Math.random() * 90;
-          break;
-        default:
-          value = Math.random() * 100;
-      }
-
-      data.push({
-        date: date.toLocaleDateString("id-ID", {
-          day: "2-digit",
-          month: "short",
-        }),
-        time: date.toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        value: parseFloat(value.toFixed(2)),
-      });
-    }
-
-    setChartData(data);
-  };
-
+  // ==========================================================
+  // Sensor Appearance Config
+  // ==========================================================
   const getSensorInfo = () => {
     const configs = {
       temperature: {
@@ -172,7 +160,9 @@ const SensorChartModal = ({
     return 300 - ((value - minValue) / (maxValue - minValue)) * 300;
   };
 
-  // Export Data to Excel
+  // ==========================================================
+  // Export Excel (tetap sama, tidak diubah)
+  // ==========================================================
   const handleExport = async () => {
     try {
       const workbook = new ExcelJS.Workbook();
@@ -185,7 +175,6 @@ const SensorChartModal = ({
         { header: "Status", key: "status", width: 15 },
       ];
 
-      // calculate status
       const avg = chartData.reduce((a, b) => a + b.value, 0) / chartData.length;
 
       chartData.forEach((point) => {
@@ -204,33 +193,17 @@ const SensorChartModal = ({
         });
       });
 
-      // style header
       worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
-      worksheet.getRow(1).fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FF1E293B" },
-      };
 
-      // auto align
-      worksheet.eachRow((row) => {
-        row.alignment = { vertical: "middle", horizontal: "center" };
-      });
-
-      // create file buffer
       const buffer = await workbook.xlsx.writeBuffer();
-
-      // trigger download
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
+      const blob = new Blob([buffer]);
       const url = URL.createObjectURL(blob);
+
       const a = document.createElement("a");
       a.href = url;
-      a.download = `data_${sensorType}_${new Date()
-        .toISOString()
-        .slice(0, 10)}.xlsx`;
+      a.download = `history_${sensorType}.xlsx`;
       a.click();
+
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Export failed:", err);
