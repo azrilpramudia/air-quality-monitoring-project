@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { mlOnline } from "./predict.service.js";
+import { mlOnline } from "../ml/predict.service.js";
 
 const prisma = new PrismaClient();
 

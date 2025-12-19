@@ -1,4 +1,4 @@
-import { requestMLPrediction, getMlStatus } from "./predict.service.js";
+import { requestMLPrediction, getMlStatus } from "../ml/predict.service.js";
 
 export async function predictAQ(req, res) {
   try {

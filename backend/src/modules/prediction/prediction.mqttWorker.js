@@ -5,7 +5,7 @@ import {
   requestMLPrediction,
   getMlStatus,
   checkMLHealth,
-} from "./predict.service.js";
+} from "../ml/predict.service.js";
 
 // ========================================
 // HELPERS

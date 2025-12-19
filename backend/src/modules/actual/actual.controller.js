@@ -21,7 +21,7 @@ export const getAllSensorData = async (req, res) => {
   }
 };
 
-export const deleteAllSensorData = async (req, res, next) => {
+export const deleteAllSensorData = async (req, res) => {
   try {
     const deleted = await deleteAllSensorDataService();
 
@@ -31,6 +31,7 @@ export const deleteAllSensorData = async (req, res, next) => {
       deletedCount: deleted.count,
     });
   } catch (err) {
+    next(err);
     console.error("❌ Error deleting sensor data:", err);
     return res.status(500).json({
       status: "error",
