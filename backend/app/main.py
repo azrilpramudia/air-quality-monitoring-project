@@ -18,7 +18,7 @@ from ai.training.train_from_db import train_from_db
 
 app = FastAPI(
     title="Air Quality ML Service",
-    version="1.0.0",
+    version="1.1.0",
 )
 
 app.add_middleware(
@@ -48,24 +48,47 @@ DATABASE_URL = os.getenv(
 engine = create_engine(DATABASE_URL)
 
 # ======================================================
-# LOAD MODEL
+# GLOBAL MODEL STATE (AUTO-RELOAD SAFE)
 # ======================================================
 
-if not os.path.exists(MODEL_PATH):
-    raise RuntimeError(f"Model not found: {MODEL_PATH}")
+model = None
+scaler = None
+feature_names = None
+target_cols = None
+FREQ = None
+MODEL_LOADED_AT = None
 
-print("🚀 Loading ML model...")
-bundle = joblib.load(MODEL_PATH)
 
-model = bundle["model"]
-scaler = bundle["scaler"]
-feature_names = bundle["feature_names"]
-target_cols = bundle["target_cols"]
-FREQ = bundle["freq"]
+def load_model():
+    """
+    Load / Reload model bundle from disk
+    """
+    global model, scaler, feature_names, target_cols, FREQ, MODEL_LOADED_AT
 
-print("✅ Model loaded")
-print("   Features:", len(feature_names))
-print("   Targets :", target_cols)
+    if not os.path.exists(MODEL_PATH):
+        raise RuntimeError(f"Model not found: {MODEL_PATH}")
+
+    print("🔄 Loading ML model...")
+    bundle = joblib.load(MODEL_PATH)
+
+    model = bundle["model"]
+    scaler = bundle["scaler"]
+    feature_names = bundle["feature_names"]
+    target_cols = bundle["target_cols"]
+    FREQ = bundle.get("freq", "1h")
+    MODEL_LOADED_AT = time.time()
+
+    print("✅ Model loaded")
+    print("   Features:", len(feature_names))
+    print("   Targets :", target_cols)
+    print("   Loaded at:", time.ctime(MODEL_LOADED_AT))
+
+
+# ======================================================
+# LOAD MODEL AT STARTUP
+# ======================================================
+
+load_model()
 
 # ======================================================
 # REQUEST / RESPONSE MODELS
@@ -91,11 +114,13 @@ class TrainResponse(BaseModel):
     rows_used: int
     mae: list[float]
     trained_at: str
+    model_reloaded: bool
 
 
 class HealthResponse(BaseModel):
     status: str
     model_loaded: bool
+    model_loaded_at: float | None
     uptime_seconds: float
 
 
@@ -108,6 +133,7 @@ def health():
     return HealthResponse(
         status="ok",
         model_loaded=model is not None,
+        model_loaded_at=MODEL_LOADED_AT,
         uptime_seconds=time.time() - START_TIME,
     )
 
@@ -119,11 +145,11 @@ def health():
 @app.post("/predict", response_model=PredictResponse)
 def predict(req: PredictRequest):
     try:
+        if model is None:
+            raise HTTPException(503, "Model not loaded")
+
         print(f"📥 Predict request | device={req.device_id}, lookback={req.lookback_hours}h")
 
-        # ----------------------------------
-        # 1) Load history from DB
-        # ----------------------------------
         query = """
         SELECT
             ts,
@@ -150,9 +176,6 @@ def predict(req: PredictRequest):
         df["ts"] = pd.to_datetime(df["ts"], utc=True)
         df = df.set_index("ts").sort_index()
 
-        # ----------------------------------
-        # 2) Column normalization (CRITICAL)
-        # ----------------------------------
         df = df.rename(
             columns={
                 "temperature": "temp_c",
@@ -163,21 +186,10 @@ def predict(req: PredictRequest):
             }
         )
 
-        for c in ["temp_c", "rh_pct", "tvoc_ppb", "eco2_ppm", "dust_ugm3"]:
-            if c not in df.columns:
-                raise HTTPException(500, f"Missing column: {c}")
-
-        # ----------------------------------
-        # 3) Feature engineering
-        # ----------------------------------
         X_latest = build_latest_features(df)
-
         X_latest = X_latest[feature_names]
         X_np = scaler.transform(X_latest.values)
 
-        # ----------------------------------
-        # 4) Predict
-        # ----------------------------------
         pred = model.predict(X_np)[0]
 
         print("✅ Prediction OK:", pred.tolist())
@@ -197,20 +209,25 @@ def predict(req: PredictRequest):
 
 
 # ======================================================
-# TRAIN (MANUAL)
+# TRAIN + AUTO-RELOAD
 # ======================================================
 
 @app.post("/train", response_model=TrainResponse)
 def train(req: TrainRequest):
     try:
         print("🧠 Training requested")
-        bundle = train_from_db(req.device_id)
+
+        result = train_from_db(req.device_id)
+
+        # 🔥 AUTO-RELOAD MODEL AFTER TRAINING
+        load_model()
 
         return TrainResponse(
             status="success",
-            rows_used=bundle["rows"],
-            mae=bundle["mae"],
-            trained_at=bundle["trained_at"],
+            rows_used=result["rows"],
+            mae=result["mae"],
+            trained_at=result["trained_at"],
+            model_reloaded=True,
         )
 
     except Exception as e:
@@ -226,5 +243,6 @@ def train(req: TrainRequest):
 def root():
     return {
         "service": "Air Quality ML Service",
+        "version": "1.1.0",
         "endpoints": ["/health", "/predict", "/train"],
     }
