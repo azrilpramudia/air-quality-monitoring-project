@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import time
 import os
+import logging
+from .logging_config import HealthFilter
 
 from sqlalchemy import create_engine
 
@@ -124,6 +126,12 @@ class HealthResponse(BaseModel):
     uptime_seconds: float
 
 
+# =============================
+# FILTER ACCESS LOG (TOP LEVEL)
+# =============================
+uvicorn_access = logging.getLogger("uvicorn.access")
+uvicorn_access.addFilter(HealthFilter())
+
 # ======================================================
 # HEALTH
 # ======================================================
@@ -136,7 +144,6 @@ def health():
         model_loaded_at=MODEL_LOADED_AT,
         uptime_seconds=time.time() - START_TIME,
     )
-
 
 # ======================================================
 # PREDICT (DB-BASED)
