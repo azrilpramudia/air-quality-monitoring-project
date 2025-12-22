@@ -5,7 +5,6 @@
 import axios from "axios";
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "http://127.0.0.1:8500";
-
 const REQUEST_TIMEOUT = 10000;
 
 // ========================================
@@ -23,10 +22,26 @@ export function getMlStatus() {
 }
 
 // ========================================
-// MANUAL HEALTH CHECK (ON-DEMAND)
+// INITIAL HEALTH CHECK (LOG ONCE)
 // ========================================
 
-export async function checkMLHealth() {
+export async function initMLHealth() {
+  console.log("🔍 [ML] Initial health check...");
+
+  const ok = await checkMLHealth({ silent: true });
+
+  console.log(
+    ok
+      ? `✅ [ML] Service ONLINE | Last health check: ${lastHealthCheck.toISOString()}`
+      : `❌ [ML] Service OFFLINE | Last health check: ${lastHealthCheck.toISOString()}`
+  );
+}
+
+// ========================================
+// HEALTH CHECK (INTERNAL / SILENT BY DEFAULT)
+// ========================================
+
+export async function checkMLHealth({ silent = false } = {}) {
   try {
     const res = await axios.get(`${ML_SERVICE_URL}/health`, {
       timeout: 5000,
@@ -35,7 +50,7 @@ export async function checkMLHealth() {
     mlOnline = res.status === 200;
     lastHealthCheck = new Date();
 
-    if (mlOnline) {
+    if (!silent && mlOnline) {
       console.log("✅ [ML] Service is ONLINE");
     }
 
@@ -43,7 +58,11 @@ export async function checkMLHealth() {
   } catch (err) {
     mlOnline = false;
     lastHealthCheck = new Date();
-    console.error("❌ [ML] Service is OFFLINE:", err.message);
+
+    if (!silent) {
+      console.error("❌ [ML] Service is OFFLINE:", err.message);
+    }
+
     return false;
   }
 }
@@ -53,9 +72,9 @@ export async function checkMLHealth() {
 // ========================================
 
 export async function requestMLPrediction(deviceId, lookbackHours = 24) {
-  // 🔒 cek health SEKALI kalau belum online
+  // 🔒 Lazy health check (silent)
   if (!mlOnline) {
-    await checkMLHealth();
+    await checkMLHealth({ silent: true });
     if (!mlOnline) {
       throw new Error("ML service is offline");
     }
@@ -76,16 +95,16 @@ export async function requestMLPrediction(deviceId, lookbackHours = 24) {
 
     return res.data;
   } catch (err) {
+    // Mark offline if ML fails
+    mlOnline = false;
+
     if (err.response?.status === 422) {
-      console.error("❌ [ML] 422 Validation Error");
-      console.error("❌ Payload:", {
+      console.error("❌ [ML] 422 Validation Error", {
         device_id: deviceId,
         lookback_hours: lookbackHours,
       });
     }
 
-    // kalau gagal → tandai offline
-    mlOnline = false;
     throw err;
   }
 }

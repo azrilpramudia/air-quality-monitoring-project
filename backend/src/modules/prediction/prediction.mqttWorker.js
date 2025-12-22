@@ -21,11 +21,11 @@ const safeNum = (v) =>
 let mlWarned = false;
 
 // ========================================
-// MAIN WORKER (RAW-BASED, CORRECT)
+// MAIN WORKER
 // ========================================
 
 export function initPredictionMQTTWorker() {
-  console.log("🧠 Prediction MQTT worker (RAW-BASED) initialized.");
+  console.log("🧠 Prediction MQTT worker initialized.");
 
   mqttClient.on("message", async (topic, msg) => {
     try {
@@ -76,13 +76,13 @@ export function initPredictionMQTTWorker() {
       }
 
       // ------------------------------------
-      // 3) Request ML prediction (RAW request)
+      // 3) Request ML prediction
       // ------------------------------------
       let mlRes;
       try {
         mlRes = await requestMLPrediction(
-          sensors.device_id, // ✅ FIX
-          24 // ✅ FIX
+          sensors.device_id,
+          24 // lookback hours (HARUS sama dengan training)
         );
       } catch (err) {
         console.error("❌ [PRED] ML request failed:", err.message);
@@ -91,33 +91,61 @@ export function initPredictionMQTTWorker() {
       }
 
       // ------------------------------------
-      // 4) Save prediction to DB
+      // 4) Validate ML response
+      // ------------------------------------
+      if (
+        !mlRes ||
+        !Array.isArray(mlRes.prediction) ||
+        mlRes.prediction.length !== 5
+      ) {
+        throw new Error("Invalid ML prediction format");
+      }
+
+      // ------------------------------------
+      // 5) Build forecast (ARRAY)
+      // ------------------------------------
+      const forecast = [
+        {
+          ts: new Date(),
+          temp_c: mlRes.prediction[0],
+          rh_pct: mlRes.prediction[1],
+          tvoc_ppb: mlRes.prediction[2],
+          eco2_ppm: mlRes.prediction[3],
+          dust_ugm3: mlRes.prediction[4],
+        },
+      ];
+
+      // ------------------------------------
+      // 6) Save prediction to DB
       // ------------------------------------
       const saved = await savePrediction({
         device_id: sensors.device_id,
         generated_at: new Date(),
-        forecast: mlRes.forecast, // ARRAY WITH TIMESTAMP
-        meta: mlRes.meta || {},
+        forecast, // ✅ ARRAY (FIX UTAMA)
+        meta: {
+          target_cols: mlRes.target_cols,
+          model_ts: mlRes.timestamp,
+        },
       });
 
       // ------------------------------------
-      // 5) Real-time broadcast
+      // 7) Broadcast via WebSocket
       // ------------------------------------
       broadcastWS({
         type: "prediction_update",
         data: {
           id: saved.id,
           device_id: sensors.device_id,
-          forecast: mlRes.forecast,
+          forecast,
         },
       });
 
       console.log(
-        `✅ [PRED] Prediction saved & broadcast | device=${sensors.device_id} | points=${mlRes.forecast.length}`
+        `✅ [PRED] Prediction saved & broadcast | device=${sensors.device_id}`
       );
       console.log("─".repeat(80));
     } catch (err) {
-      console.error("❌ [PRED] Worker fatal error:", err);
+      console.error("❌ [PRED] Worker fatal error:", err.message);
       console.error(err.stack);
     }
   });

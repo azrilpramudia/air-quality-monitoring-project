@@ -7,36 +7,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+///////////////////////////////////////////////////////
+// ACTUAL SENSOR DATA (REALTIME / RAW DATA)
+///////////////////////////////////////////////////////
+
 model Actual {
   id          Int      @id @default(autoincrement())
   ts          DateTime
   deviceId    String
+
   temperature Float
   humidity    Float
   tvoc        Int
   eco2        Int
   dust        Float
   aqi         Float?
+
   createdAt   DateTime @default(now())
 
-  predictions Prediction[]
+  @@index([deviceId, ts])
 }
+
+///////////////////////////////////////////////////////
+// ML PREDICTION (FORECAST-BASED, DECOUPLED)
+///////////////////////////////////////////////////////
 
 model Prediction {
   id           Int      @id @default(autoincrement())
-  actualId     Int
-  actual       Actual  @relation(fields: [actualId], references: [id])
+
+  deviceId     String
+  timestamp    DateTime        // reference time (latest actual ts)
+  generatedAt  DateTime @default(now())
+
+  forecastJson Json            // 🔮 array of forecast points
+  metaJson     Json?           // model info, feature count, etc
+
+  modelVersion String
 
   createdAt    DateTime @default(now())
-  timestamp    DateTime
-  temp_c       Float
-  rh_pct       Float
-  tvoc_ppb     Float
-  eco2_ppm     Float
-  dust_ugm3    Float
-  featuresJson Json
-  forecastJson Json
-  modelVersion String
+
+  @@index([deviceId, timestamp])
 }
-
-
