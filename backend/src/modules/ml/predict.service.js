@@ -91,8 +91,8 @@ export async function requestMLPrediction(deviceId, lookbackHours = 24) {
     const res = await axios.post(
       `${ML_SERVICE_URL}/predict`,
       {
-        device_id: deviceId,
-        lookback_hours: lookbackHours,
+        device_id: deviceId, // ✅ STRING
+        lookback_hours: lookbackHours, // ✅ NUMBER
       },
       {
         timeout: REQUEST_TIMEOUT,
@@ -100,16 +100,14 @@ export async function requestMLPrediction(deviceId, lookbackHours = 24) {
       }
     );
 
-    if (!res.data || !res.data.prediction) {
-      throw new Error("Invalid ML response format");
-    }
-
     return res.data;
   } catch (err) {
-    if (err.code === "ECONNREFUSED" || err.code === "ETIMEDOUT") {
-      mlOnline = false;
-      console.error("❌ [ML] Service unreachable");
-      checkMLHealth();
+    if (err.response?.status === 422) {
+      console.error("❌ [ML] 422 Validation Error");
+      console.error("❌ Sent payload:", {
+        device_id: deviceId,
+        lookback_hours: lookbackHours,
+      });
     }
     throw err;
   }

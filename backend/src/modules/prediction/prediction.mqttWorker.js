@@ -80,18 +80,13 @@ export function initPredictionMQTTWorker() {
       // ------------------------------------
       let mlRes;
       try {
-        mlRes = await requestMLPrediction({
-          device_id: sensors.device_id,
-          lookback_hours: 24, // MUST match training lag
-        });
+        mlRes = await requestMLPrediction(
+          sensors.device_id, // ✅ FIX
+          24 // ✅ FIX
+        );
       } catch (err) {
         console.error("❌ [PRED] ML request failed:", err.message);
         await checkMLHealth();
-        return;
-      }
-
-      if (!mlRes || !Array.isArray(mlRes.forecast)) {
-        console.error("❌ [PRED] Invalid ML response:", mlRes);
         return;
       }
 
