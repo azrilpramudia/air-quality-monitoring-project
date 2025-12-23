@@ -7,17 +7,24 @@ import {
   checkMLHealth,
 } from "../ml/predict.service.js";
 
-// ================================
-// CONFIG
-// ================================
+// ========================================
+// CONFIG (DEV MODE)
+// ========================================
 
-const SENSOR_MAX_AGE = 60_000; // 1 menit
+// Sensor kirim ±1 menit → kasih toleransi
+const SENSOR_MAX_AGE = 2 * 60 * 1000; // 2 menit
+
+// Prediction interval (DEV)
+const PREDICT_INTERVAL = 60 * 1000; // 1 menit
+
+// Per-device prediction lock
+const lastPredictMap = new Map();
 
 let mlWarned = false;
 
-// ================================
+// ========================================
 // WORKER
-// ================================
+// ========================================
 
 export function initPredictionMQTTWorker() {
   console.log("🧠 Prediction MQTT worker initialized.");
@@ -25,7 +32,7 @@ export function initPredictionMQTTWorker() {
   mqttClient.on("message", async (_topic, msg, packet) => {
     try {
       // ------------------------------------
-      // 0️⃣ DROP MQTT RETAINED
+      // 0️⃣ DROP MQTT RETAINED MESSAGE
       // ------------------------------------
       if (packet?.retain) {
         console.log("⏭️ [PRED] Retained message skipped");
@@ -46,7 +53,7 @@ export function initPredictionMQTTWorker() {
       if (!data.device_id || !data.ts) return;
 
       // ------------------------------------
-      // 2️⃣ Timestamp freshness
+      // 2️⃣ Timestamp freshness check
       // ------------------------------------
       const sensorTs = new Date(Number(data.ts) * 1000);
       const age = Date.now() - sensorTs.getTime();
@@ -57,7 +64,7 @@ export function initPredictionMQTTWorker() {
       }
 
       // ------------------------------------
-      // 3️⃣ ML health
+      // 3️⃣ ML Health Check
       // ------------------------------------
       const mlStatus = getMlStatus();
 
@@ -77,11 +84,23 @@ export function initPredictionMQTTWorker() {
       }
 
       // ------------------------------------
-      // 4️⃣ Request ML prediction
+      // 4️⃣ Prediction interval guard
+      // ------------------------------------
+      const lastPred = lastPredictMap.get(data.device_id);
+
+      if (lastPred && Date.now() - lastPred < PREDICT_INTERVAL) {
+        return; // ⛔ belum waktunya predict
+      }
+
+      // ------------------------------------
+      // 5️⃣ Request ML Prediction
       // ------------------------------------
       let mlRes;
       try {
-        mlRes = await requestMLPrediction(data.device_id, 24);
+        mlRes = await requestMLPrediction(
+          data.device_id,
+          24 // lookback hours
+        );
       } catch (err) {
         console.error("❌ [PRED] ML request failed:", err.message);
         await checkMLHealth();
@@ -94,7 +113,7 @@ export function initPredictionMQTTWorker() {
       }
 
       // ------------------------------------
-      // 5️⃣ Save prediction
+      // 6️⃣ Save Prediction to DB
       // ------------------------------------
       const saved = await savePrediction({
         device_id: data.device_id,
@@ -106,8 +125,11 @@ export function initPredictionMQTTWorker() {
         },
       });
 
+      // Mark prediction time
+      lastPredictMap.set(data.device_id, Date.now());
+
       // ------------------------------------
-      // 6️⃣ Broadcast
+      // 7️⃣ Broadcast via WebSocket
       // ------------------------------------
       broadcastWS({
         type: "prediction_update",
