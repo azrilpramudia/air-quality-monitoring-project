@@ -45,6 +45,8 @@ This project includes an **AI forecasting module** built with Python **FastAPI**
 
 ## Example Images
 ![Preview](/media/images/website.png)
+![Preview](/media/images/website2.png)
+![Preview](/media/images/website3.png)
 
 ---
 
