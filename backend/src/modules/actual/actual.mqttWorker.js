@@ -7,8 +7,20 @@ import { broadcastWS } from "../../websocket/wsServer.js";
 // CONFIG
 // ================================
 
-const SENSOR_MAX_AGE = 60_000; // 1 menit (anggap realtime)
-const MIN_INTERVAL = 10_000; // 10 detik (anti spam)
+// Realtime window
+const SENSOR_MAX_AGE = 60_000; // 1 menit
+
+// Anti-duplicate (timestamp)
+const MIN_TS_DIFF = 30_000; // 30 detik (DEV)
+
+// Change threshold (noise filter)
+const CHANGE_THRESHOLD = {
+  temperature: 0.2,
+  humidity: 0.5,
+  tvoc: 10,
+  eco2: 20,
+  dust: 1,
+};
 
 // ================================
 // HELPERS
@@ -23,6 +35,17 @@ const safeNum = (v) =>
 
 const isValid = (v) => typeof v === "number" && !isNaN(v);
 
+const hasSignificantChange = (curr, prev) => {
+  return (
+    Math.abs(curr.temperature - prev.temperature) >
+      CHANGE_THRESHOLD.temperature ||
+    Math.abs(curr.humidity - prev.humidity) > CHANGE_THRESHOLD.humidity ||
+    Math.abs(curr.tvoc - prev.tvoc) > CHANGE_THRESHOLD.tvoc ||
+    Math.abs(curr.eco2 - prev.eco2) > CHANGE_THRESHOLD.eco2 ||
+    Math.abs(curr.dust - prev.dust) > CHANGE_THRESHOLD.dust
+  );
+};
+
 // ================================
 // WORKER
 // ================================
@@ -33,7 +56,7 @@ export function initActualMQTTWorker() {
   mqttClient.on("message", async (_topic, msg, packet) => {
     try {
       // ------------------------------------
-      // 0️⃣ DROP MQTT RETAINED MESSAGE
+      // 0️⃣ DROP RETAINED MESSAGE
       // ------------------------------------
       if (packet?.retain) {
         console.log("⏭️ [ACTUAL] Retained message skipped");
@@ -57,13 +80,13 @@ export function initActualMQTTWorker() {
       }
 
       // ------------------------------------
-      // 2️⃣ Timestamp freshness check
+      // 2️⃣ Timestamp validation
       // ------------------------------------
       const sensorTs = new Date(Number(payload.ts) * 1000);
       const age = Date.now() - sensorTs.getTime();
 
-      if (age > SENSOR_MAX_AGE) {
-        console.log("⏭️ [ACTUAL] Stale sensor data skipped");
+      if (isNaN(sensorTs.getTime()) || age > SENSOR_MAX_AGE) {
+        console.log("⏭️ [ACTUAL] Stale / invalid sensor timestamp");
         return;
       }
 
@@ -83,7 +106,7 @@ export function initActualMQTTWorker() {
       };
 
       // ------------------------------------
-      // 4️⃣ Basic validation
+      // 4️⃣ Basic value validation
       // ------------------------------------
       if (
         !isValid(actual.temperature) ||
@@ -92,19 +115,26 @@ export function initActualMQTTWorker() {
         !isValid(actual.eco2) ||
         !isValid(actual.dust)
       ) {
-        console.warn("⚠️ [ACTUAL] Invalid sensor values");
+        console.warn("⚠️ [ACTUAL] Invalid sensor values", actual);
         return;
       }
 
       // ------------------------------------
-      // 5️⃣ Anti-spam interval
+      // 5️⃣ Duplicate & noise filter
       // ------------------------------------
       const last = await getLatestActualData(actual.deviceId);
 
       if (last) {
-        const diff = actual.createdAt - last.createdAt;
-        if (diff < MIN_INTERVAL) {
-          console.log("⏩ [ACTUAL] Skipped (too frequent)");
+        // 5a. Duplicate timestamp
+        const tsDiff = actual.ts.getTime() - last.ts.getTime();
+        if (Math.abs(tsDiff) < MIN_TS_DIFF) {
+          console.log("⏩ [ACTUAL] Skipped (duplicate timestamp)");
+          return;
+        }
+
+        // 5b. No significant change
+        if (!hasSignificantChange(actual, last)) {
+          console.log("📉 [ACTUAL] Skipped (no significant change)");
           return;
         }
       }
@@ -129,6 +159,7 @@ export function initActualMQTTWorker() {
       });
     } catch (err) {
       console.error("❌ [ACTUAL] Worker error:", err.message);
+      console.error(err.stack);
     }
   });
 }
