@@ -44,6 +44,9 @@ This project includes an **AI forecasting module** built with Python **FastAPI**
 - TVOC (ppb)
 
 ## Example Images
+![Preview](/media/images/AQI.jpg)
+
+## Example Website
 ![Preview](/media/images/)
 
 ---
