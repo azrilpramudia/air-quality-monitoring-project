@@ -4,6 +4,9 @@ import axios from "axios";
 const router = express.Router();
 const ML_URL = "http://127.0.0.1:8500";
 
+// let mlOnline = false;
+// let lastCheck = null;
+
 router.get("/health", async (_req, res) => {
   try {
     const ml = await axios.get(`${ML_URL}/health`, { timeout: 3000 });
@@ -55,5 +58,21 @@ router.post("/train", async (req, res) => {
     });
   }
 });
+
+// router.get("/status", async (_req, res) => {
+//   try {
+//     await axios.get(`${ML_URL}/health`, { timeout: 3000 });
+//     mlOnline = true;
+//     lastCheck = new Date();
+//   } catch {
+//     mlOnline = false;
+//     lastCheck = new Date();
+//   }
+
+//   res.json({
+//     online: mlOnline,
+//     lastCheck,
+//   });
+// });
 
 export default router;
