@@ -28,7 +28,7 @@ A modern web dashboard built with **React + WebSockets + MQTT** shows:
 
 ### 🔗 Live Dashboard Preview
 
-https://your-live-dashboard-demo-link.com
+https://air-quality-monitoring-dusky.vercel.app
 
 If running locally:
 
