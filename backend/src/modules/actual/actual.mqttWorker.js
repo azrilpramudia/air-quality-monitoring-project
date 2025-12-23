@@ -1,29 +1,18 @@
+// src/modules/actual/actual.mqttWorker.js
 import mqttClient from "../../mqtt/mqttClient.js";
-import {
-  saveActualData,
-  getLatestActualData,
-  findActualByDeviceAndTs,
-} from "./actual.repository.js";
+import { saveActualData, getLatestActualData } from "./actual.repository.js";
 import { broadcastWS } from "../../websocket/wsServer.js";
 
-// ========================================
+// ================================
 // CONFIG
-// ========================================
+// ================================
 
-const MAX_DATA_AGE = 5 * 60 * 1000; // 5 menit
-const MIN_INTERVAL = 10_000; // 10 detik
+const SENSOR_MAX_AGE = 60_000; // 1 menit (anggap realtime)
+const MIN_INTERVAL = 10_000; // 10 detik (anti spam)
 
-const BOUNDS = {
-  temperature: [-10, 60],
-  humidity: [0, 100],
-  tvoc: [0, 10000],
-  eco2: [0, 10000],
-  dust: [0, 1000],
-};
-
-// ========================================
+// ================================
 // HELPERS
-// ========================================
+// ================================
 
 const safeNum = (v) =>
   typeof v === "number"
@@ -34,16 +23,26 @@ const safeNum = (v) =>
 
 const isValid = (v) => typeof v === "number" && !isNaN(v);
 
-// ========================================
-// MQTT WORKER
-// ========================================
+// ================================
+// WORKER
+// ================================
 
 export function initActualMQTTWorker() {
   console.log("📡 Actual MQTT worker initialized");
 
-  mqttClient.on("message", async (_topic, msg) => {
+  mqttClient.on("message", async (_topic, msg, packet) => {
     try {
+      // ------------------------------------
+      // 0️⃣ DROP MQTT RETAINED MESSAGE
+      // ------------------------------------
+      if (packet?.retain) {
+        console.log("⏭️ [ACTUAL] Retained message skipped");
+        return;
+      }
+
+      // ------------------------------------
       // 1️⃣ Parse JSON
+      // ------------------------------------
       let payload;
       try {
         payload = JSON.parse(msg.toString());
@@ -57,15 +56,20 @@ export function initActualMQTTWorker() {
         return;
       }
 
+      // ------------------------------------
+      // 2️⃣ Timestamp freshness check
+      // ------------------------------------
       const sensorTs = new Date(Number(payload.ts) * 1000);
-      const now = Date.now();
+      const age = Date.now() - sensorTs.getTime();
 
-      // 2️⃣ DROP OLD / RETAINED MESSAGE
-      if (now - sensorTs.getTime() > MAX_DATA_AGE) {
-        console.log("⏭️ [ACTUAL] Old retained message skipped");
+      if (age > SENSOR_MAX_AGE) {
+        console.log("⏭️ [ACTUAL] Stale sensor data skipped");
         return;
       }
 
+      // ------------------------------------
+      // 3️⃣ Normalize payload
+      // ------------------------------------
       const actual = {
         deviceId: payload.device_id,
         ts: sensorTs,
@@ -78,36 +82,36 @@ export function initActualMQTTWorker() {
         createdAt: new Date(),
       };
 
-      // 3️⃣ Sanity validation
-      for (const key in BOUNDS) {
-        const [min, max] = BOUNDS[key];
-        const val = actual[key];
-
-        if (!isValid(val) || val < min || val > max) {
-          console.warn(`⚠️ [ACTUAL] Invalid ${key}:`, val);
-          return;
-        }
-      }
-
-      // 4️⃣ DUPLICATE CHECK (deviceId + ts)
-      const exists = await findActualByDeviceAndTs(actual.deviceId, actual.ts);
-
-      if (exists) {
-        console.log("⏭️ [ACTUAL] Duplicate data skipped");
+      // ------------------------------------
+      // 4️⃣ Basic validation
+      // ------------------------------------
+      if (
+        !isValid(actual.temperature) ||
+        !isValid(actual.humidity) ||
+        !isValid(actual.tvoc) ||
+        !isValid(actual.eco2) ||
+        !isValid(actual.dust)
+      ) {
+        console.warn("⚠️ [ACTUAL] Invalid sensor values");
         return;
       }
 
-      // 5️⃣ INTERVAL CHECK (BASED ON SENSOR ts)
+      // ------------------------------------
+      // 5️⃣ Anti-spam interval
+      // ------------------------------------
       const last = await getLatestActualData(actual.deviceId);
+
       if (last) {
-        const diff = actual.ts - last.ts;
+        const diff = actual.createdAt - last.createdAt;
         if (diff < MIN_INTERVAL) {
-          console.log("⏩ [ACTUAL] Too frequent, skipped");
+          console.log("⏩ [ACTUAL] Skipped (too frequent)");
           return;
         }
       }
 
+      // ------------------------------------
       // 6️⃣ Save to DB
+      // ------------------------------------
       const saved = await saveActualData(actual);
 
       console.log(
@@ -116,14 +120,15 @@ export function initActualMQTTWorker() {
         } | ts=${saved.ts.toISOString()}`
       );
 
-      // 7️⃣ WebSocket broadcast
+      // ------------------------------------
+      // 7️⃣ Broadcast
+      // ------------------------------------
       broadcastWS({
         type: "actual_update",
         data: saved,
       });
     } catch (err) {
       console.error("❌ [ACTUAL] Worker error:", err.message);
-      console.error(err.stack);
     }
   });
 }

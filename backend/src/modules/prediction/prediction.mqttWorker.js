@@ -1,3 +1,4 @@
+// src/modules/prediction/prediction.mqttWorker.js
 import mqttClient from "../../mqtt/mqttClient.js";
 import { savePrediction } from "./prediction.repository.js";
 import { broadcastWS } from "../../websocket/wsServer.js";
@@ -7,62 +8,63 @@ import {
   checkMLHealth,
 } from "../ml/predict.service.js";
 
-// ========================================
-// HELPERS
-// ========================================
+// ================================
+// CONFIG
+// ================================
 
-const safeNum = (v) =>
-  typeof v === "number"
-    ? v
-    : typeof v === "string" && v.trim() !== ""
-    ? Number(v)
-    : 0;
+const SENSOR_MAX_AGE = 60_000; // 1 menit
 
 let mlWarned = false;
 
-// ========================================
-// MAIN WORKER
-// ========================================
+// ================================
+// WORKER
+// ================================
 
 export function initPredictionMQTTWorker() {
   console.log("🧠 Prediction MQTT worker initialized.");
 
-  mqttClient.on("message", async (topic, msg) => {
+  mqttClient.on("message", async (_topic, msg, packet) => {
     try {
       // ------------------------------------
-      // 1) Parse MQTT JSON
+      // 0️⃣ DROP MQTT RETAINED
+      // ------------------------------------
+      if (packet?.retain) {
+        console.log("⏭️ [PRED] Retained message skipped");
+        return;
+      }
+
+      // ------------------------------------
+      // 1️⃣ Parse JSON
       // ------------------------------------
       let data;
       try {
         data = JSON.parse(msg.toString());
       } catch {
-        console.error("❌ [PRED] Invalid JSON from MQTT");
+        console.error("❌ [PRED] Invalid JSON");
         return;
       }
 
-      if (!data.device_id || !data.ts) {
-        console.warn("⚠️ [PRED] Missing device_id or ts, skipping");
-        return;
-      }
-
-      const sensors = {
-        device_id: data.device_id,
-        ts: Number(data.ts),
-        temp_c: safeNum(data.temp_c),
-        rh_pct: safeNum(data.rh_pct),
-        tvoc_ppb: safeNum(data.tvoc_ppb),
-        eco2_ppm: safeNum(data.eco2_ppm),
-        dust_ugm3: safeNum(data.dust_ugm3),
-      };
+      if (!data.device_id || !data.ts) return;
 
       // ------------------------------------
-      // 2) Check ML service status
+      // 2️⃣ Timestamp freshness
+      // ------------------------------------
+      const sensorTs = new Date(Number(data.ts) * 1000);
+      const age = Date.now() - sensorTs.getTime();
+
+      if (age > SENSOR_MAX_AGE) {
+        console.log("⏭️ [PRED] Stale sensor data skipped");
+        return;
+      }
+
+      // ------------------------------------
+      // 3️⃣ ML health
       // ------------------------------------
       const mlStatus = getMlStatus();
 
       if (!mlStatus.online) {
         if (!mlWarned) {
-          console.log("⚠️ [PRED] ML service offline — prediction skipped");
+          console.log("⚠️ [PRED] ML offline — prediction skipped");
           console.log("Last health check:", mlStatus.lastCheck);
           mlWarned = true;
           await checkMLHealth();
@@ -71,82 +73,54 @@ export function initPredictionMQTTWorker() {
       }
 
       if (mlWarned) {
-        console.log("✅ [PRED] ML service back online");
+        console.log("✅ [PRED] ML back online");
         mlWarned = false;
       }
 
       // ------------------------------------
-      // 3) Request ML prediction
+      // 4️⃣ Request ML prediction
       // ------------------------------------
       let mlRes;
       try {
-        mlRes = await requestMLPrediction(
-          sensors.device_id,
-          24 // lookback hours (HARUS sama dengan training)
-        );
+        mlRes = await requestMLPrediction(data.device_id, 24);
       } catch (err) {
         console.error("❌ [PRED] ML request failed:", err.message);
         await checkMLHealth();
         return;
       }
 
-      // ------------------------------------
-      // 4) Validate ML response
-      // ------------------------------------
-      if (
-        !mlRes ||
-        !Array.isArray(mlRes.prediction) ||
-        mlRes.prediction.length !== 5
-      ) {
-        throw new Error("Invalid ML prediction format");
+      if (!Array.isArray(mlRes.prediction)) {
+        console.warn("⚠️ [PRED] Invalid ML response");
+        return;
       }
 
       // ------------------------------------
-      // 5) Build forecast (ARRAY)
-      // ------------------------------------
-      const forecast = [
-        {
-          ts: new Date(),
-          temp_c: mlRes.prediction[0],
-          rh_pct: mlRes.prediction[1],
-          tvoc_ppb: mlRes.prediction[2],
-          eco2_ppm: mlRes.prediction[3],
-          dust_ugm3: mlRes.prediction[4],
-        },
-      ];
-
-      // ------------------------------------
-      // 6) Save prediction to DB
+      // 5️⃣ Save prediction
       // ------------------------------------
       const saved = await savePrediction({
-        device_id: sensors.device_id,
+        device_id: data.device_id,
         generated_at: new Date(),
-        forecast, // ✅ ARRAY (FIX UTAMA)
+        forecast: mlRes.prediction,
         meta: {
           target_cols: mlRes.target_cols,
-          model_ts: mlRes.timestamp,
+          model_ts: Date.now(),
         },
       });
 
       // ------------------------------------
-      // 7) Broadcast via WebSocket
+      // 6️⃣ Broadcast
       // ------------------------------------
       broadcastWS({
         type: "prediction_update",
-        data: {
-          id: saved.id,
-          device_id: sensors.device_id,
-          forecast,
-        },
+        data: saved,
       });
 
       console.log(
-        `✅ [PRED] Prediction saved & broadcast | device=${sensors.device_id}`
+        `✅ [PRED] Prediction saved & broadcast | device=${data.device_id}`
       );
       console.log("─".repeat(80));
     } catch (err) {
       console.error("❌ [PRED] Worker fatal error:", err.message);
-      console.error(err.stack);
     }
   });
 }
