@@ -1,4 +1,3 @@
-// src/modules/prediction/prediction.mqttWorker.js
 import mqttClient from "../../mqtt/mqttClient.js";
 import { savePrediction } from "./prediction.repository.js";
 import { broadcastWS } from "../../websocket/wsServer.js";

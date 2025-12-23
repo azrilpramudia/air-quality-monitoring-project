@@ -4,6 +4,7 @@ import cors from "cors";
 import sensorRoutes from "./modules/actual/actual.routes.js";
 import predictionRoutes from "./modules/prediction/predict.routes.js";
 import historyRoutes from "./modules/history/history.routes.js";
+import mlRouter from "./routes/ml.routes.js";
 
 import { notFound } from "./middleware/notFound.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -27,6 +28,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/actual", sensorRoutes);
 app.use("/api/history", historyRoutes);
 app.use("/api/predict", predictionRoutes);
+app.use("/api/ml", mlRouter);
 
 // Middleware (404 + error)
 app.use(notFound);
