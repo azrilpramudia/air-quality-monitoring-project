@@ -1,4 +1,3 @@
-// src/modules/actual/actual.repository.js
 import prisma from "../../config/prisma.js";
 
 /**
@@ -7,8 +6,8 @@ import prisma from "../../config/prisma.js";
 export async function saveActualData(data) {
   return prisma.actual.create({
     data: {
-      deviceId: data.deviceId, // ✅ Prisma field
-      ts: data.ts, // ✅ REQUIRED (sensor timestamp)
+      deviceId: data.deviceId,
+      ts: data.ts,
       temperature: data.temperature,
       humidity: data.humidity,
       tvoc: data.tvoc,
@@ -21,12 +20,24 @@ export async function saveActualData(data) {
 }
 
 /**
- * Get latest actual data for a device (anti-overload)
+ * Get latest actual data for a device
  */
 export async function getLatestActualData(deviceId) {
   return prisma.actual.findFirst({
-    where: { deviceId }, // ✅ FIXED
-    orderBy: { createdAt: "desc" },
+    where: { deviceId },
+    orderBy: { ts: "desc" }, // 🔥 lebih benar pakai ts sensor
+  });
+}
+
+/**
+ * Find duplicate by deviceId + ts
+ */
+export async function findActualByDeviceAndTs(deviceId, ts) {
+  return prisma.actual.findFirst({
+    where: {
+      deviceId,
+      ts,
+    },
   });
 }
 
@@ -35,8 +46,8 @@ export async function getLatestActualData(deviceId) {
  */
 export async function getActualHistory(deviceId, limit = 200) {
   return prisma.actual.findMany({
-    where: { deviceId }, // ✅ FIXED
-    orderBy: { createdAt: "desc" },
+    where: { deviceId },
+    orderBy: { ts: "desc" },
     take: limit,
   });
 }

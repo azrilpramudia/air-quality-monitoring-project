@@ -18,12 +18,8 @@ export async function savePrediction({
   return prisma.prediction.create({
     data: {
       deviceId: device_id,
-
-      // ✅ REQUIRED FIELDS (MATCH SCHEMA)
       timestamp: ts,
       generatedAt: ts,
-
-      // 🔥 INI KUNCI UTAMA
       forecastJson: forecast,
       metaJson: meta,
 

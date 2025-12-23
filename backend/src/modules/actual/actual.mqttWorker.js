@@ -1,7 +1,25 @@
-// src/modules/actual/actual.mqttWorker.js
 import mqttClient from "../../mqtt/mqttClient.js";
-import { saveActualData, getLatestActualData } from "./actual.repository.js";
+import {
+  saveActualData,
+  getLatestActualData,
+  findActualByDeviceAndTs,
+} from "./actual.repository.js";
 import { broadcastWS } from "../../websocket/wsServer.js";
+
+// ========================================
+// CONFIG
+// ========================================
+
+const MAX_DATA_AGE = 5 * 60 * 1000; // 5 menit
+const MIN_INTERVAL = 10_000; // 10 detik
+
+const BOUNDS = {
+  temperature: [-10, 60],
+  humidity: [0, 100],
+  tvoc: [0, 10000],
+  eco2: [0, 10000],
+  dust: [0, 1000],
+};
 
 // ========================================
 // HELPERS
@@ -16,18 +34,6 @@ const safeNum = (v) =>
 
 const isValid = (v) => typeof v === "number" && !isNaN(v);
 
-// Insert interval protection
-const MIN_INTERVAL = 10_000; // 10 seconds
-
-// Sensor bounds (sanity check)
-const BOUNDS = {
-  temperature: [-10, 60],
-  humidity: [0, 100],
-  tvoc: [0, 10000],
-  eco2: [0, 10000],
-  dust: [0, 1000],
-};
-
 // ========================================
 // MQTT WORKER
 // ========================================
@@ -37,9 +43,7 @@ export function initActualMQTTWorker() {
 
   mqttClient.on("message", async (_topic, msg) => {
     try {
-      // -----------------------------
       // 1️⃣ Parse JSON
-      // -----------------------------
       let payload;
       try {
         payload = JSON.parse(msg.toString());
@@ -53,12 +57,18 @@ export function initActualMQTTWorker() {
         return;
       }
 
-      // -----------------------------
-      // 2️⃣ Normalize payload
-      // -----------------------------
+      const sensorTs = new Date(Number(payload.ts) * 1000);
+      const now = Date.now();
+
+      // 2️⃣ DROP OLD / RETAINED MESSAGE
+      if (now - sensorTs.getTime() > MAX_DATA_AGE) {
+        console.log("⏭️ [ACTUAL] Old retained message skipped");
+        return;
+      }
+
       const actual = {
         deviceId: payload.device_id,
-        ts: new Date(Number(payload.ts) * 1000), // sensor timestamp
+        ts: sensorTs,
         temperature: safeNum(payload.temp_c),
         humidity: safeNum(payload.rh_pct),
         tvoc: safeNum(payload.tvoc_ppb),
@@ -68,35 +78,36 @@ export function initActualMQTTWorker() {
         createdAt: new Date(),
       };
 
-      // -----------------------------
       // 3️⃣ Sanity validation
-      // -----------------------------
       for (const key in BOUNDS) {
         const [min, max] = BOUNDS[key];
         const val = actual[key];
 
         if (!isValid(val) || val < min || val > max) {
-          console.warn(`⚠️ [ACTUAL] Dropped invalid ${key}:`, val);
+          console.warn(`⚠️ [ACTUAL] Invalid ${key}:`, val);
           return;
         }
       }
 
-      // -----------------------------
-      // 4️⃣ Anti-overload filter
-      // -----------------------------
+      // 4️⃣ DUPLICATE CHECK (deviceId + ts)
+      const exists = await findActualByDeviceAndTs(actual.deviceId, actual.ts);
+
+      if (exists) {
+        console.log("⏭️ [ACTUAL] Duplicate data skipped");
+        return;
+      }
+
+      // 5️⃣ INTERVAL CHECK (BASED ON SENSOR ts)
       const last = await getLatestActualData(actual.deviceId);
-
       if (last) {
-        const diff = actual.createdAt - last.createdAt;
+        const diff = actual.ts - last.ts;
         if (diff < MIN_INTERVAL) {
-          console.log("⏩ [ACTUAL] Skipped (too frequent)");
+          console.log("⏩ [ACTUAL] Too frequent, skipped");
           return;
         }
       }
 
-      // -----------------------------
-      // 5️⃣ Save to DB
-      // -----------------------------
+      // 6️⃣ Save to DB
       const saved = await saveActualData(actual);
 
       console.log(
@@ -105,9 +116,7 @@ export function initActualMQTTWorker() {
         } | ts=${saved.ts.toISOString()}`
       );
 
-      // -----------------------------
-      // 6️⃣ WebSocket broadcast
-      // -----------------------------
+      // 7️⃣ WebSocket broadcast
       broadcastWS({
         type: "actual_update",
         data: saved,
