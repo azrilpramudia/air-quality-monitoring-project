@@ -99,7 +99,6 @@ const SensorCardsGrid = ({ sensorData, onOpenChart, handleSensorClick }) => {
                     {sensor.title}
                   </h4>
                 </div>
-                
               </div>
               <p className="text-xs sm:text-sm text-white/90 font-medium">
                 {sensor.desc}

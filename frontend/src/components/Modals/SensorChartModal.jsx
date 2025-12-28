@@ -24,7 +24,7 @@ const SensorChartModal = ({
   const fetchHistory = async () => {
     if (!sensorType) return;
 
-    const hours = timeRange === "24h" ? 24 : timeRange === "7d" ? 168 : 720; // 30d = 720 jam
+    const hours = timeRange === "24h" ? 24 : timeRange === "7d" ? 168 : 720;
 
     try {
       const res = await fetch(
@@ -32,13 +32,49 @@ const SensorChartModal = ({
       );
 
       const json = await res.json();
-      if (!json?.data) return;
+      if (!Array.isArray(json?.data)) return;
 
-      const formatted = json.data.map((d) => ({
-        date: d.date,
-        time: d.time,
-        value: d.value,
-      }));
+      const formatted = json.data
+        .map((d) => {
+          const ts = new Date(d.ts || d.timestamp);
+          if (isNaN(ts.getTime())) return null;
+
+          let value;
+          switch (sensorType) {
+            case "temperature":
+              value = d.temperature ?? d.temp_c;
+              break;
+            case "humidity":
+              value = d.humidity ?? d.rh_pct;
+              break;
+            case "tvoc":
+              value = d.tvoc ?? d.tvoc_ppb;
+              break;
+            case "eco2":
+              value = d.eco2 ?? d.eco2_ppm;
+              break;
+            case "dust":
+              value = d.dust ?? d.dust_ugm3;
+              break;
+            default:
+              value = null;
+          }
+
+          if (typeof value !== "number") return null;
+
+          return {
+            date: ts.toLocaleDateString("id-ID", {
+              day: "2-digit",
+              month: "short",
+            }),
+            time: ts.toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            value,
+          };
+        })
+        .filter(Boolean);
 
       setChartData(formatted);
     } catch (err) {
@@ -46,49 +82,67 @@ const SensorChartModal = ({
     }
   };
 
-  // panggil saat modal dibuka atau type berubah atau range berubah
   useEffect(() => {
-    if (isOpen && sensorType) {
-      fetchHistory();
-    }
+    if (isOpen && sensorType) fetchHistory();
   }, [isOpen, sensorType, timeRange]);
 
   // ==========================================================
   // 2. Real-time MQTT → append data terbaru
   // ==========================================================
+
   useEffect(() => {
     if (!lastMessage || !isOpen) return;
 
     try {
-      const topic = lastMessage.topic;
       const payload = JSON.parse(lastMessage.message || "{}");
 
-      if (topic.includes(sensorType)) {
-        const newValue = parseFloat(payload.value);
-        if (!isNaN(newValue)) {
-          const newEntry = {
-            date: new Date().toLocaleDateString("id-ID", {
-              day: "2-digit",
-              month: "short",
-            }),
-            time: new Date().toLocaleTimeString("id-ID", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            value: newValue,
-          };
-
-          setChartData((prev) => [...prev.slice(-499), newEntry]); // keep last 500 points
-        }
+      let value;
+      switch (sensorType) {
+        case "temperature":
+          value = payload.temp_c;
+          break;
+        case "humidity":
+          value = payload.rh_pct;
+          break;
+        case "tvoc":
+          value = payload.tvoc_ppb;
+          break;
+        case "eco2":
+          value = payload.eco2_ppm;
+          break;
+        case "dust":
+          value = payload.dust_ugm3;
+          break;
+        default:
+          value = null;
       }
+
+      if (typeof value !== "number" || isNaN(value)) return;
+
+      const now = new Date();
+
+      const newEntry = {
+        date: now.toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "short",
+        }),
+        time: now.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        value,
+      };
+
+      setChartData((prev) => [...prev.slice(-499), newEntry]);
     } catch (err) {
-      console.warn("⚠️ Error parsing MQTT message:", err);
+      console.warn("⚠️ MQTT parse error:", err);
     }
   }, [lastMessage, isOpen]);
 
   // ==========================================================
   // Sensor Appearance Config
   // ==========================================================
+
   const getSensorInfo = () => {
     const configs = {
       temperature: {
@@ -136,27 +190,35 @@ const SensorChartModal = ({
     return configs[sensorType] || configs.temperature;
   };
 
+  // ==========================================================
+  // 4️⃣ SAFE STATISTICS (FIXED NaN / Infinity)
+  // ==========================================================
   const getStatistics = () => {
-    if (chartData.length === 0) return { min: 0, max: 0, avg: 0 };
+    if (!chartData.length) return { min: 0, max: 0, avg: 0 };
 
     const values = chartData.map((d) => d.value);
     const min = Math.min(...values);
     const max = Math.max(...values);
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
 
-    return { min: min.toFixed(2), max: max.toFixed(2), avg: avg.toFixed(2) };
+    return {
+      min: min.toFixed(2),
+      max: max.toFixed(2),
+      avg: avg.toFixed(2),
+    };
   };
 
   if (!isOpen) return null;
 
   const sensorInfo = getSensorInfo();
   const stats = getStatistics();
+
   const values = chartData.map((d) => d.value);
-  const maxValue = Math.max(...values);
-  const minValue = Math.min(...values);
+  const maxValue = values.length ? Math.max(...values) : 0;
+  const minValue = values.length ? Math.min(...values) : 0;
 
   const safeY = (value) => {
-    if (maxValue === minValue || isNaN(value)) return 150;
+    if (maxValue === minValue) return 150;
     return 300 - ((value - minValue) / (maxValue - minValue)) * 300;
   };
 
