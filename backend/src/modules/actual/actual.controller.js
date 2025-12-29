@@ -3,6 +3,9 @@ import {
   deleteAllSensorDataService,
 } from "./actual.service.js";
 
+/**
+ * GET ALL SENSOR DATA (DEV / ADMIN ONLY)
+ */
 export const getAllSensorData = async (req, res) => {
   try {
     const data = await getAllSensorDataService();
@@ -14,6 +17,7 @@ export const getAllSensorData = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Error fetching sensor data:", err);
+
     return res.status(500).json({
       status: "error",
       message: "Internal Server Error",
@@ -21,7 +25,10 @@ export const getAllSensorData = async (req, res) => {
   }
 };
 
-export const deleteAllSensorData = async (req, res) => {
+/**
+ * DELETE ALL SENSOR DATA (DANGEROUS)
+ */
+export const deleteAllSensorData = async (req, res, next) => {
   try {
     const deleted = await deleteAllSensorDataService();
 
@@ -31,11 +38,7 @@ export const deleteAllSensorData = async (req, res) => {
       deletedCount: deleted.count,
     });
   } catch (err) {
-    next(err);
     console.error("❌ Error deleting sensor data:", err);
-    return res.status(500).json({
-      status: "error",
-      message: "Internal Server Error",
-    });
+    next(err); // ✅ sekarang valid
   }
 };

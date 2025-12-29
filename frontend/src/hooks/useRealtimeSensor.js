@@ -7,57 +7,79 @@ export const useRealtimeSensor = () => {
     tvoc: 0,
     eco2: 0,
     dust: 0,
+    aqi: 0,
+    ts: null,
   });
 
   const [connected, setConnected] = useState(false);
 
   const wsRef = useRef(null);
-  const reconnectRef = useRef(null);
+  const reconnectTimer = useRef(null);
+  const isConnecting = useRef(false);
 
   useEffect(() => {
     const connectWS = () => {
+      if (isConnecting.current) return;
+      isConnecting.current = true;
+
       const ws = new WebSocket(import.meta.env.VITE_WS_URL);
       wsRef.current = ws;
 
-      console.log("WS URL:", import.meta.env.VITE_WS_URL);
+      console.log("🔗 WS URL:", import.meta.env.VITE_WS_URL);
 
       ws.onopen = () => {
-        console.log("🔌 WS Connected");
+        console.log("✅ WS Connected");
         setConnected(true);
+        isConnecting.current = false;
 
-        if (reconnectRef.current) {
-          clearInterval(reconnectRef.current);
-          reconnectRef.current = null;
+        if (reconnectTimer.current) {
+          clearInterval(reconnectTimer.current);
+          reconnectTimer.current = null;
         }
       };
 
-      ws.onmessage = (msg) => {
-        console.log("🔥 WS RAW MESSAGE:", msg.data);
+      ws.onmessage = (event) => {
+        console.log("🔥 WS RAW MESSAGE:", event.data);
 
         try {
-          const payload = JSON.parse(msg.data);
+          const payload = JSON.parse(event.data);
 
-          if (payload.type === "sensor_update") {
-            console.log("📥 Realtime Update:", payload.data);
-            setData(payload.data);
+          // ===============================
+          // ✅ ACTUAL SENSOR UPDATE
+          // ===============================
+          if (payload.type === "actual_update") {
+            const d = payload.data;
+
+            setData({
+              temperature: d.temperature ?? 0,
+              humidity: d.humidity ?? 0,
+              tvoc: d.tvoc ?? 0,
+              eco2: d.eco2 ?? 0,
+              dust: d.dust ?? 0,
+              aqi: d.aqi ?? 0,
+              ts: d.ts || d.createdAt || null,
+            });
           }
+
+          // (prediction_update tidak masuk ke hook ini — chart handle sendiri)
         } catch (err) {
-          console.error("WS parse error:", err);
+          console.error("❌ WS parse error:", err);
         }
+      };
+
+      ws.onerror = (err) => {
+        console.error("❌ WS Error:", err);
+        ws.close();
       };
 
       ws.onclose = () => {
         console.warn("⚠ WS Disconnected");
         setConnected(false);
+        isConnecting.current = false;
 
-        if (!reconnectRef.current) {
-          reconnectRef.current = setInterval(connectWS, 2000);
+        if (!reconnectTimer.current) {
+          reconnectTimer.current = setInterval(connectWS, 3000);
         }
-      };
-
-      ws.onerror = (err) => {
-        console.error("WS Error:", err);
-        ws.close();
       };
     };
 
@@ -65,7 +87,7 @@ export const useRealtimeSensor = () => {
 
     return () => {
       if (wsRef.current) wsRef.current.close();
-      if (reconnectRef.current) clearInterval(reconnectRef.current);
+      if (reconnectTimer.current) clearInterval(reconnectTimer.current);
     };
   }, []);
 
