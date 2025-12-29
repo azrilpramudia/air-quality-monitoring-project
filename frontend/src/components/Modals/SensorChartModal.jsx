@@ -34,49 +34,8 @@ const SensorChartModal = ({
       const json = await res.json();
       if (!Array.isArray(json?.data)) return;
 
-      const formatted = json.data
-        .map((d) => {
-          const ts = new Date(d.ts || d.timestamp);
-          if (isNaN(ts.getTime())) return null;
-
-          let value;
-          switch (sensorType) {
-            case "temperature":
-              value = d.temperature ?? d.temp_c;
-              break;
-            case "humidity":
-              value = d.humidity ?? d.rh_pct;
-              break;
-            case "tvoc":
-              value = d.tvoc ?? d.tvoc_ppb;
-              break;
-            case "eco2":
-              value = d.eco2 ?? d.eco2_ppm;
-              break;
-            case "dust":
-              value = d.dust ?? d.dust_ugm3;
-              break;
-            default:
-              value = null;
-          }
-
-          if (typeof value !== "number") return null;
-
-          return {
-            date: ts.toLocaleDateString("id-ID", {
-              day: "2-digit",
-              month: "short",
-            }),
-            time: ts.toLocaleTimeString("id-ID", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            value,
-          };
-        })
-        .filter(Boolean);
-
-      setChartData(formatted);
+      // ✅ BACKEND SUDAH FORMAT → LANGSUNG PAKAI
+      setChartData(json.data);
     } catch (err) {
       console.warn("⚠️ Failed to fetch history:", err);
     }
