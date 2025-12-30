@@ -19,12 +19,12 @@
 #include "esp_timer.h"          // esp_timer untuk LVGL tick (core 3.x)
 
 /*********** WiFi & MQTT Config ***********/
-#define WIFI_SSID     "LCS-Guest"
-#define WIFI_PASS     "lcsguestwifi2025"
+#define WIFI_SSID     "Redmi Note 12"
+#define WIFI_PASS     "kotakembang"
 #define MQTT_SERVER   "broker.emqx.io"
 #define MQTT_PORT     1883
-#define MQTT_TOPIC    "jlksafkjdsalkcjalkdsfljahahjoiqjwoiejiwqueoiwqueiwfhkjbj217482140173498309ureckjdbcbdsajfb"
-#define DEVICE_ID     "esp32-01"
+#define MQTT_TOPIC    "uninus/iot/air_quality/esp32-01"
+#define DEVICE_ID     "esp32-01-client-io"
 
 /*********** NTP (Asia/Jakarta = UTC+7) **********/
 const long  GMT_OFFSET_SEC = 7 * 3600;
