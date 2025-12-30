@@ -4,7 +4,7 @@ import { mlOnline } from "../ml/predict.service.js";
 const prisma = new PrismaClient();
 
 /**
- * Format time for chart label (HH:mm)
+ * Format time HH:mm
  */
 function formatTime(ts) {
   const d = new Date(ts);
@@ -27,50 +27,54 @@ export async function getPredictionChart(req, res) {
     }
 
     // ======================================================
-    // 1. ACTUAL DATA (last 48 points)
+    // 1️⃣ ACTUAL DATA — 1 JAM TERAKHIR (60 POINTS)
     // ======================================================
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
     const actualRows = await prisma.actual.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 48,
+      where: {
+        ts: { gte: oneHourAgo },
+      },
+      orderBy: { ts: "asc" },
     });
 
-    const actual = actualRows.reverse().map((row) => ({
-      time: formatTime(row.createdAt),
+    const actual = actualRows.map((row) => ({
+      time: formatTime(row.ts), // ✅ pakai timestamp sensor
       value: type === "temperature" ? row.temperature : row.tvoc,
       type: "actual",
     }));
 
     // ======================================================
-    // 2. LATEST PREDICTION
+    // 2️⃣ PREDICTION — 1 JAM KE DEPAN
     // ======================================================
     const latestPrediction = await prisma.prediction.findFirst({
-      orderBy: { createdAt: "desc" },
+      orderBy: { timestamp: "desc" },
     });
 
     let predicted = [];
 
-    /**
-     * Expected forecastJson format:
-     * {
-     *   forecast: [
-     *     { ts: "2025-12-19T11:00:00Z", temp_c: 30.2, tvoc_ppb: 1200 },
-     *     ...
-     *   ]
-     * }
-     */
     if (
       latestPrediction?.forecastJson &&
-      Array.isArray(latestPrediction.forecastJson.forecast)
+      Array.isArray(latestPrediction.forecastJson.prediction)
     ) {
-      predicted = latestPrediction.forecastJson.forecast.map((item) => ({
-        time: formatTime(item.ts),
-        value: type === "temperature" ? item.temp_c : item.tvoc_ppb,
-        type: "predicted",
-      }));
+      const forecast = latestPrediction.forecastJson.prediction;
+
+      // mulai dari timestamp prediction
+      let baseTime = new Date(latestPrediction.timestamp);
+
+      predicted = forecast.slice(0, 60).map((value, i) => {
+        const ts = new Date(baseTime.getTime() + (i + 1) * 60 * 1000);
+
+        return {
+          time: formatTime(ts), // ⏱️ jam real
+          value: Number(value.toFixed(2)), // ✅ angka valid
+          type: "predicted",
+        };
+      });
     }
 
     // ======================================================
-    // 3. RESPONSE
+    // 3️⃣ RESPONSE
     // ======================================================
     return res.json({
       success: true,

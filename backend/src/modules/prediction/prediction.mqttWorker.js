@@ -7,15 +7,8 @@ import {
   checkMLHealth,
 } from "../ml/predict.service.js";
 
-// ========================================
-// CONFIG (DEV MODE)
-// ========================================
-
-// Sensor kirim ±1 menit → kasih toleransi
-const SENSOR_MAX_AGE = 2 * 60 * 1000; // 2 menit
-
-// Prediction interval (DEV)
-const PREDICT_INTERVAL = 60 * 1000; // 1 menit
+const SENSOR_MAX_AGE = 2 * 60 * 1000; // Sensor tolerance (sensor kirim per menit)
+const PREDICT_INTERVAL = 60 * 60 * 1000; // 🔥 Prediction hanya 1x per jam
 
 // Per-device prediction lock
 const lastPredictMap = new Map();
@@ -27,21 +20,14 @@ let mlWarned = false;
 // ========================================
 
 export function initPredictionMQTTWorker() {
-  console.log("🧠 Prediction MQTT worker initialized.");
+  console.log("🧠 Prediction MQTT worker initialized (HOURLY MODE)");
 
   mqttClient.on("message", async (_topic, msg, packet) => {
     try {
-      // ------------------------------------
-      // 0️⃣ DROP MQTT RETAINED MESSAGE
-      // ------------------------------------
-      if (packet?.retain) {
-        console.log("⏭️ [PRED] Retained message skipped");
-        return;
-      }
+      // 0️⃣ Drop retained message
+      if (packet?.retain) return;
 
-      // ------------------------------------
       // 1️⃣ Parse JSON
-      // ------------------------------------
       let data;
       try {
         data = JSON.parse(msg.toString());
@@ -52,26 +38,21 @@ export function initPredictionMQTTWorker() {
 
       if (!data.device_id || !data.ts) return;
 
-      // ------------------------------------
-      // 2️⃣ Timestamp freshness check
-      // ------------------------------------
+      // 2️⃣ Timestamp validation
       const sensorTs = new Date(Number(data.ts) * 1000);
       const age = Date.now() - sensorTs.getTime();
 
-      if (age > SENSOR_MAX_AGE) {
+      if (isNaN(sensorTs.getTime()) || age > SENSOR_MAX_AGE) {
         console.log("⏭️ [PRED] Stale sensor data skipped");
         return;
       }
 
-      // ------------------------------------
       // 3️⃣ ML Health Check
-      // ------------------------------------
       const mlStatus = getMlStatus();
 
       if (!mlStatus.online) {
         if (!mlWarned) {
           console.log("⚠️ [PRED] ML offline — prediction skipped");
-          console.log("Last health check:", mlStatus.lastCheck);
           mlWarned = true;
           await checkMLHealth();
         }
@@ -83,23 +64,20 @@ export function initPredictionMQTTWorker() {
         mlWarned = false;
       }
 
-      // ------------------------------------
-      // 4️⃣ Prediction interval guard
-      // ------------------------------------
+      // 4️⃣ HOURLY prediction guard (KUNCI UTAMA)
       const lastPred = lastPredictMap.get(data.device_id);
 
       if (lastPred && Date.now() - lastPred < PREDICT_INTERVAL) {
-        return; // ⛔ belum waktunya predict
+        console.log("⏳ [PRED] Waiting next hourly prediction");
+        return;
       }
 
-      // ------------------------------------
       // 5️⃣ Request ML Prediction
-      // ------------------------------------
       let mlRes;
       try {
         mlRes = await requestMLPrediction(
           data.device_id,
-          24 // lookback hours
+          24 // lookback 24 jam
         );
       } catch (err) {
         console.error("❌ [PRED] ML request failed:", err.message);
@@ -107,41 +85,44 @@ export function initPredictionMQTTWorker() {
         return;
       }
 
-      if (!Array.isArray(mlRes.prediction)) {
-        console.warn("⚠️ [PRED] Invalid ML response");
+      if (!Array.isArray(mlRes.prediction) || mlRes.prediction.length === 0) {
+        console.warn("⚠️ [PRED] Empty or invalid ML prediction");
         return;
       }
 
-      // ------------------------------------
-      // 6️⃣ Save Prediction to DB
-      // ------------------------------------
+      // 6️⃣ Save prediction
       const saved = await savePrediction({
         device_id: data.device_id,
         generated_at: new Date(),
-        forecast: mlRes.prediction,
+        forecast: mlRes.prediction, // ⬅️ ARRAY
         meta: {
           target_cols: mlRes.target_cols,
+          lookback_hours: 24,
+          interval: "1h",
           model_ts: Date.now(),
         },
       });
 
-      // Mark prediction time
+      // Lock prediction time
       lastPredictMap.set(data.device_id, Date.now());
 
-      // ------------------------------------
-      // 7️⃣ Broadcast via WebSocket
-      // ------------------------------------
+      // 7️⃣ Broadcast
       broadcastWS({
         type: "prediction_update",
-        data: saved,
+        data: {
+          deviceId: saved.deviceId,
+          timestamp: saved.timestamp,
+          predictionCount: mlRes.prediction.length,
+        },
       });
 
       console.log(
-        `✅ [PRED] Prediction saved & broadcast | device=${data.device_id}`
+        `✅ [PRED] HOURLY prediction saved | device=${data.device_id}`
       );
       console.log("─".repeat(80));
     } catch (err) {
       console.error("❌ [PRED] Worker fatal error:", err.message);
+      console.error(err.stack);
     }
   });
 }

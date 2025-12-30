@@ -7,10 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-///////////////////////////////////////////////////////
-// ACTUAL SENSOR DATA (REALTIME / RAW DATA)
-///////////////////////////////////////////////////////
-
 model Actual {
   id          Int      @id @default(autoincrement())
   ts          DateTime
@@ -28,19 +24,16 @@ model Actual {
   @@index([deviceId, ts])
 }
 
-///////////////////////////////////////////////////////
-// ML PREDICTION (FORECAST-BASED, DECOUPLED)
-///////////////////////////////////////////////////////
 
 model Prediction {
   id           Int      @id @default(autoincrement())
 
   deviceId     String
-  timestamp    DateTime        // reference time (latest actual ts)
+  timestamp    DateTime        
   generatedAt  DateTime @default(now())
 
-  forecastJson Json            // 🔮 array of forecast points
-  metaJson     Json?           // model info, feature count, etc
+  forecastJson Json            
+  metaJson     Json?           
 
   modelVersion String
 

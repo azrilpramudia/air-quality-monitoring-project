@@ -22,10 +22,9 @@ export async function manualPredict(req, res) {
     }
 
     // 2️⃣ KIRIM KE ML TANPA BUILD FEATURE
-    // ML yang urus feature engineering
     const mlRes = await axios.post(`${ML_SERVICE_URL}/predict`, {
       device_id: deviceId,
-      lookback_hours: 24, // ⬅️ ML ambil data sendiri dari DB
+      lookback_hours: 24,
     });
 
     return res.json({

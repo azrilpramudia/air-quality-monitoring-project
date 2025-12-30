@@ -1,19 +1,9 @@
-// src/modules/actual/actual.mqttWorker.js
 import mqttClient from "../../mqtt/mqttClient.js";
 import { saveActualData, getLatestActualData } from "./actual.repository.js";
-import { broadcastWS } from "../../websocket/wsServer.js";
 
-// ================================
-// CONFIG
-// ================================
+const SENSOR_MAX_AGE = 2 * 60 * 1000; // 2 menit
+const SAVE_INTERVAL = 60 * 60 * 1000; // 1 jam
 
-// Realtime window
-const SENSOR_MAX_AGE = 60_000; // 1 menit
-
-// Anti-duplicate (timestamp)
-const MIN_TS_DIFF = 30_000; // 30 detik (DEV)
-
-// Change threshold (noise filter)
 const CHANGE_THRESHOLD = {
   temperature: 0.2,
   humidity: 0.5,
@@ -21,10 +11,6 @@ const CHANGE_THRESHOLD = {
   eco2: 20,
   dust: 1,
 };
-
-// ================================
-// HELPERS
-// ================================
 
 const safeNum = (v) =>
   typeof v === "number"
@@ -46,53 +32,19 @@ const hasSignificantChange = (curr, prev) => {
   );
 };
 
-// ================================
-// WORKER
-// ================================
-
 export function initActualMQTTWorker() {
-  console.log("📡 Actual MQTT worker initialized");
+  console.log("📡 Actual MQTT worker initialized (HOURLY MODE)");
 
   mqttClient.on("message", async (_topic, msg, packet) => {
     try {
-      // ------------------------------------
-      // 0️⃣ DROP RETAINED MESSAGE
-      // ------------------------------------
-      if (packet?.retain) {
-        console.log("⏭️ [ACTUAL] Retained message skipped");
-        return;
-      }
+      if (packet?.retain) return;
 
-      // ------------------------------------
-      // 1️⃣ Parse JSON
-      // ------------------------------------
-      let payload;
-      try {
-        payload = JSON.parse(msg.toString());
-      } catch {
-        console.error("❌ [ACTUAL] Invalid JSON");
-        return;
-      }
+      const payload = JSON.parse(msg.toString());
+      if (!payload.device_id || !payload.ts) return;
 
-      if (!payload.device_id || !payload.ts) {
-        console.warn("⚠️ [ACTUAL] Missing device_id or ts");
-        return;
-      }
+      const sensorTs = new Date(payload.ts * 1000);
+      if (Date.now() - sensorTs.getTime() > SENSOR_MAX_AGE) return;
 
-      // ------------------------------------
-      // 2️⃣ Timestamp validation
-      // ------------------------------------
-      const sensorTs = new Date(Number(payload.ts) * 1000);
-      const age = Date.now() - sensorTs.getTime();
-
-      if (isNaN(sensorTs.getTime()) || age > SENSOR_MAX_AGE) {
-        console.log("⏭️ [ACTUAL] Stale / invalid sensor timestamp");
-        return;
-      }
-
-      // ------------------------------------
-      // 3️⃣ Normalize payload
-      // ------------------------------------
       const actual = {
         deviceId: payload.device_id,
         ts: sensorTs,
@@ -105,9 +57,6 @@ export function initActualMQTTWorker() {
         createdAt: new Date(),
       };
 
-      // ------------------------------------
-      // 4️⃣ Basic value validation
-      // ------------------------------------
       if (
         !isValid(actual.temperature) ||
         !isValid(actual.humidity) ||
@@ -115,51 +64,28 @@ export function initActualMQTTWorker() {
         !isValid(actual.eco2) ||
         !isValid(actual.dust)
       ) {
-        console.warn("⚠️ [ACTUAL] Invalid sensor values", actual);
         return;
       }
 
-      // ------------------------------------
-      // 5️⃣ Duplicate & noise filter
-      // ------------------------------------
       const last = await getLatestActualData(actual.deviceId);
 
       if (last) {
-        // 5a. Duplicate timestamp
-        const tsDiff = actual.ts.getTime() - last.ts.getTime();
-        if (Math.abs(tsDiff) < MIN_TS_DIFF) {
-          console.log("⏩ [ACTUAL] Skipped (duplicate timestamp)");
+        const diff = actual.ts.getTime() - last.ts.getTime();
+        if (diff < SAVE_INTERVAL) {
+          console.log("⏳ [ACTUAL] Waiting next hour");
           return;
         }
 
-        // 5b. No significant change
         if (!hasSignificantChange(actual, last)) {
-          console.log("📉 [ACTUAL] Skipped (no significant change)");
+          console.log("📉 [ACTUAL] No significant hourly change");
           return;
         }
       }
 
-      // ------------------------------------
-      // 6️⃣ Save to DB
-      // ------------------------------------
-      const saved = await saveActualData(actual);
-
-      console.log(
-        `💾 [ACTUAL] Saved | device=${
-          saved.deviceId
-        } | ts=${saved.ts.toISOString()}`
-      );
-
-      // ------------------------------------
-      // 7️⃣ Broadcast
-      // ------------------------------------
-      broadcastWS({
-        type: "actual_update",
-        data: saved,
-      });
+      await saveActualData(actual);
+      console.log(`💾 [ACTUAL] Saved HOURLY | ${actual.deviceId}`);
     } catch (err) {
-      console.error("❌ [ACTUAL] Worker error:", err.message);
-      console.error(err.stack);
+      console.error("❌ [ACTUAL] Error:", err.message);
     }
   });
 }

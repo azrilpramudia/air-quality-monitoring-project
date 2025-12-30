@@ -45,9 +45,9 @@ export const useRealtimeSensor = () => {
           const payload = JSON.parse(event.data);
 
           // ===============================
-          // ✅ ACTUAL SENSOR UPDATE
+          // ✅ REALTIME SENSOR UPDATE (FIX)
           // ===============================
-          if (payload.type === "actual_update") {
+          if (payload.type === "sensor_update") {
             const d = payload.data;
 
             setData({
@@ -57,11 +57,9 @@ export const useRealtimeSensor = () => {
               eco2: d.eco2 ?? 0,
               dust: d.dust ?? 0,
               aqi: d.aqi ?? 0,
-              ts: d.ts || d.createdAt || null,
+              ts: d.ts ?? null,
             });
           }
-
-          // (prediction_update tidak masuk ke hook ini — chart handle sendiri)
         } catch (err) {
           console.error("❌ WS parse error:", err);
         }
